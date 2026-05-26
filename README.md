@@ -1,5 +1,7 @@
 # ansible-go
 
+[English](README.md) | [中文](README_zh.md)
+
 A Go reimplementation of Ansible — a single static binary for Linux server automation via SSH.
 
 ## Why ansible-go?

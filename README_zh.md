@@ -1,5 +1,7 @@
 # ansible-go
 
+[English](README.md) | [中文](README_zh.md)
+
 用 Go 语言重新实现的 Ansible —— 一个通过 SSH 管理 Linux 服务器的单一静态二进制工具。
 
 ## 为什么选择 ansible-go？
