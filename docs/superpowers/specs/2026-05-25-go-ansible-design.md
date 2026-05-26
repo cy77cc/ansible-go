@@ -1,4 +1,4 @@
-# go-ansible 设计文档
+# ansible-go 设计文档
 
 > 用 Go 语言实现的完整 Ansible 工具，目标是 1:1 复刻 Ansible 核心功能。
 
@@ -76,7 +76,7 @@ CLI 参数 → 解析 Inventory → 加载 Variables → 解析 Playbook/Ad-hoc
 基于 `cobra` 库，顶层命令结构：
 
 ```
-go-ansible
+ansible-go
 ├── <host-pattern>  # ad-hoc 命令（位置参数即主机模式，需 -m 指定模块）
 ├── playbook        # 执行 playbook 文件
 ├── inventory       # 管理 inventory
@@ -122,21 +122,21 @@ go-ansible
 **Ad-hoc 命令用法：**
 
 ```bash
-go-ansible <host-pattern> -m <module> -a "<args>" [flags]
+ansible-go <host-pattern> -m <module> -a "<args>" [flags]
 # 示例
-go-ansible all -m shell -a "uptime"
-go-ansible webservers -m copy -a "src=/local/file dest=/remote/file"
-go-ansible db -m service -a "name=mysql state=restarted" --become
+ansible-go all -m shell -a "uptime"
+ansible-go webservers -m copy -a "src=/local/file dest=/remote/file"
+ansible-go db -m service -a "name=mysql state=restarted" --become
 ```
 
 **Playbook 命令用法：**
 
 ```bash
-go-ansible playbook site.yml [flags]
+ansible-go playbook site.yml [flags]
 # 示例
-go-ansible playbook site.yml -i inventory/production
-go-ansible playbook deploy.yml --limit webservers --tags deploy
-go-ansible playbook site.yml --check --diff
+ansible-go playbook site.yml -i inventory/production
+ansible-go playbook deploy.yml --limit webservers --tags deploy
+ansible-go playbook site.yml --check --diff
 ```
 
 ---
@@ -498,7 +498,7 @@ Task 执行
 ### 6.1 执行模型
 
 ```
-go-ansible (本地)
+ansible-go (本地)
     ├── 1. 模块根据参数生成 shell 命令
     ├── 2. 通过 SSH 在远程主机执行命令
     ├── 3. 收集 stdout/stderr/exit code
@@ -874,20 +874,20 @@ collections/ansible_collections/community/general/
 
 ```bash
 # 角色
-go-ansible galaxy install username.rolename
-go-ansible galaxy install -r requirements.yml
-go-ansible galaxy list
-go-ansible galaxy remove username.rolename
+ansible-go galaxy install username.rolename
+ansible-go galaxy install -r requirements.yml
+ansible-go galaxy list
+ansible-go galaxy remove username.rolename
 
 # 集合
-go-ansible galaxy collection install community.general
-go-ansible galaxy collection install -r requirements.yml
-go-ansible galaxy collection list
-go-ansible galaxy collection remove community.general
+ansible-go galaxy collection install community.general
+ansible-go galaxy collection install -r requirements.yml
+ansible-go galaxy collection list
+ansible-go galaxy collection remove community.general
 
 # 初始化
-go-ansible galaxy init rolename
-go-ansible galaxy collection init namespace.name
+ansible-go galaxy init rolename
+ansible-go galaxy collection init namespace.name
 ```
 
 ### 11.3 requirements.yml
@@ -928,19 +928,19 @@ $ANSIBLE_VAULT;1.1;AES256
 ### 12.3 CLI 命令
 
 ```bash
-go-ansible vault encrypt file.yml
-go-ansible vault decrypt file.yml
-go-ansible vault view file.yml
-go-ansible vault edit file.yml
-go-ansible vault rekey file.yml
-go-ansible vault encrypt_string 'secret' --name 'db_password'
+ansible-go vault encrypt file.yml
+ansible-go vault decrypt file.yml
+ansible-go vault view file.yml
+ansible-go vault edit file.yml
+ansible-go vault rekey file.yml
+ansible-go vault encrypt_string 'secret' --name 'db_password'
 ```
 
 ### 12.4 Vault ID（多密码支持）
 
 ```bash
-go-ansible vault encrypt --vault-id prod@prompt file.yml
-go-ansible playbook site.yml --vault-id prod@prompt --vault-id dev@/path/to/pass
+ansible-go vault encrypt --vault-id prod@prompt file.yml
+ansible-go playbook site.yml --vault-id prod@prompt --vault-id dev@/path/to/pass
 ```
 
 ### 12.5 密码来源优先级
@@ -1166,7 +1166,7 @@ remote_user         = deploy
 host_key_checking   = False
 timeout             = 30
 forks               = 5
-log_path            = /var/log/go-ansible.log
+log_path            = /var/log/ansible-go.log
 stdout_callback     = default
 
 [privilege_escalation]
@@ -1186,9 +1186,9 @@ pipelining          = True
 ### 18.4 配置子命令
 
 ```bash
-go-ansible config list     # 列出所有配置
-go-ansible config dump     # 显示当前值及来源
-go-ansible config get key  # 查看单个配置
+ansible-go config list     # 列出所有配置
+ansible-go config dump     # 显示当前值及来源
+ansible-go config get key  # 查看单个配置
 ```
 
 ---
@@ -1196,8 +1196,8 @@ go-ansible config get key  # 查看单个配置
 ## 十九、项目目录结构
 
 ```
-go-ansible/
-├── cmd/go-ansible/main.go           # 入口
+ansible-go/
+├── cmd/ansible-go/main.go           # 入口
 ├── internal/
 │   ├── cli/                         # CLI 层
 │   ├── engine/                      # 执行引擎核心
@@ -1303,7 +1303,7 @@ go build -ldflags "
     -X main.Version=$(git describe --tags)
     -X main.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)
     -X main.Commit=$(git rev-parse --short HEAD)
-" -o bin/go-ansible ./cmd/go-ansible
+" -o bin/ansible-go ./cmd/ansible-go
 ```
 
 ### 21.3 交叉编译
@@ -1355,12 +1355,12 @@ go build -ldflags "
 
 | 阶段 | 模块 | 可运行产出 |
 |------|------|-----------|
-| P0 | 项目骨架 + CLI | `go-ansible --help` |
-| P1 | Inventory 系统 | `go-ansible inventory list` |
+| P0 | 项目骨架 + CLI | `ansible-go --help` |
+| P1 | Inventory 系统 | `ansible-go inventory list` |
 | P2 | 连接层 (SSH/Local) | SSH 连接测试 |
 | P3 | 变量系统 + 模板引擎 | 变量渲染验证 |
-| P4 | 核心模块 | `go-ansible all -m ping` |
-| P5 | Playbook 引擎 | `go-ansible playbook x.yml` |
+| P4 | 核心模块 | `ansible-go all -m ping` |
+| P5 | Playbook 引擎 | `ansible-go playbook x.yml` |
 | P6 | 更多模块 | 完整 playbook 执行 |
 | P7 | Roles 系统 | roles 目录加载执行 |
 | P8 | Handlers + 错误处理 | block/rescue/handlers |

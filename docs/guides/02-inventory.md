@@ -1,8 +1,8 @@
-# go-ansible 教学文档 02：Inventory 系统
+# ansible-go 教学文档 02：Inventory 系统
 
 > **阶段：** P1 | **设计文档引用：** 第三章 Inventory 系统
 >
-> 本文档覆盖 go-ansible 中 Inventory 子系统的完整设计——从数据模型到格式解析、变量优先级、主机模式匹配，以及 Go 实现要点。
+> 本文档覆盖 ansible-go 中 Inventory 子系统的完整设计——从数据模型到格式解析、变量优先级、主机模式匹配，以及 Go 实现要点。
 
 ---
 
@@ -44,7 +44,7 @@ Inventory
 
 **主机管理**：Inventory 记录了每一台被管主机的连接信息。你可以手动维护一份静态文件，也可以通过脚本从云平台（AWS EC2、阿里云 ECS）动态拉取。
 
-**分组**：分组是 Ansible 的灵魂能力。一条命令 `go-ansible webservers -m shell -a "nginx -t"` 可以同时作用于所有 web 服务器，而不必逐台敲命令。组可以嵌套——`production` 组可以包含 `webservers` 和 `dbservers` 两个子组。
+**分组**：分组是 Ansible 的灵魂能力。一条命令 `ansible-go webservers -m shell -a "nginx -t"` 可以同时作用于所有 web 服务器，而不必逐台敲命令。组可以嵌套——`production` 组可以包含 `webservers` 和 `dbservers` 两个子组。
 
 **变量赋值**：Inventory 不只是主机列表，更是变量的"锚点"。你可以为 `webservers` 组设置 `http_port: 80`，为 `db1` 主机单独设置 `mysql_port: 3306`。这些变量会在后续的 Playbook 渲染和模块执行中被使用。
 
@@ -153,7 +153,7 @@ web-stg-01
 # web-stg-01 同时属于 webservers 和 staging 两个组
 ```
 
-这意味着当你执行 `go-ansible staging -m ping` 和 `go-ansible webservers -m ping` 时，`web-stg-01` 都会被命中。
+这意味着当你执行 `ansible-go staging -m ping` 和 `ansible-go webservers -m ping` 时，`web-stg-01` 都会被命中。
 
 ### 2.4 all 隐含根组
 
@@ -678,9 +678,9 @@ tasks:
 **Layer 17: extra-vars（最高优先级）**
 
 ```bash
-go-ansible playbook site.yml -e "http_port=1234"
-go-ansible playbook site.yml -e '{"http_port": 1234}'
-go-ansible playbook site.yml -e @extra_vars.yml
+ansible-go playbook site.yml -e "http_port=1234"
+ansible-go playbook site.yml -e '{"http_port": 1234}'
+ansible-go playbook site.yml -e @extra_vars.yml
 ```
 
 没有任何变量可以覆盖 `extra-vars`。这是"上帝模式"——运维人员的最后手段。
@@ -1219,10 +1219,10 @@ go test ./internal/inventory/ -v -run TestMatchPattern
 **验收标准**：
 
 ```bash
-go run ./cmd/go-ansible inventory list -i testdata/hosts.ini
-go run ./cmd/go-ansible inventory list -i testdata/hosts.yml
-go run ./cmd/go-ansible inventory host web1 -i testdata/hosts.ini
-go run ./cmd/go-ansible inventory graph -i testdata/hosts.ini
+go run ./cmd/ansible-go inventory list -i testdata/hosts.ini
+go run ./cmd/ansible-go inventory list -i testdata/hosts.yml
+go run ./cmd/ansible-go inventory host web1 -i testdata/hosts.ini
+go run ./cmd/ansible-go inventory graph -i testdata/hosts.ini
 ```
 
 ---
@@ -1331,5 +1331,5 @@ all:
 
 - [Ansible 官方文档 - Inventory](https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html)
 - [Ansible 官方文档 - 变量优先级](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_variables.html#understanding-variable-precedence)
-- 设计文档：`docs/superpowers/specs/2026-05-25-go-ansible-design.md` 第三章
-- 实现计划：`docs/superpowers/plans/2026-05-25-go-ansible-implementation.md` Phase P1
+- 设计文档：`docs/superpowers/specs/2026-05-25-ansible-go-design.md` 第三章
+- 实现计划：`docs/superpowers/plans/2026-05-25-ansible-go-implementation.md` Phase P1

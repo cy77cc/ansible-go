@@ -2,7 +2,7 @@
 
 > 阶段：P10 | 设计文档引用：第十二章
 
-本章介绍 go-ansible 的 Vault 加密系统。Vault 允许将敏感数据（密码、密钥、证书）
+本章介绍 ansible-go 的 Vault 加密系统。Vault 允许将敏感数据（密码、密钥、证书）
 直接存储在版本控制系统中，通过静态加密保护，执行时透明解密。这是生产环境
 安全管理的核心基础设施。
 
@@ -246,16 +246,16 @@ $ANSIBLE_VAULT;1.2;AES256;prod
 
 ```bash
 # 加密单个文件
-go-ansible vault encrypt secrets.yml
+ansible-go vault encrypt secrets.yml
 
 # 加密多个文件
-go-ansible vault encrypt secrets1.yml secrets2.yml
+ansible-go vault encrypt secrets1.yml secrets2.yml
 
 # 加密时指定 Vault ID
-go-ansible vault encrypt --vault-id prod@prompt secrets.yml
+ansible-go vault encrypt --vault-id prod@prompt secrets.yml
 
 # 加密时使用密码文件
-go-ansible vault encrypt --vault-password-file ~/.vault_pass secrets.yml
+ansible-go vault encrypt --vault-password-file ~/.vault_pass secrets.yml
 ```
 
 加密后原地替换文件内容。原文件变为加密格式。
@@ -264,13 +264,13 @@ go-ansible vault encrypt --vault-password-file ~/.vault_pass secrets.yml
 
 ```bash
 # 解密单个文件
-go-ansible vault decrypt secrets.yml
+ansible-go vault decrypt secrets.yml
 
 # 解密多个文件
-go-ansible vault decrypt secrets1.yml secrets2.yml
+ansible-go vault decrypt secrets1.yml secrets2.yml
 
 # 解密时指定密码
-go-ansible vault decrypt --vault-password-file ~/.vault_pass secrets.yml
+ansible-go vault decrypt --vault-password-file ~/.vault_pass secrets.yml
 ```
 
 解密后原地替换文件内容。加密格式变为明文 YAML。
@@ -279,7 +279,7 @@ go-ansible vault decrypt --vault-password-file ~/.vault_pass secrets.yml
 
 ```bash
 # 查看加密文件内容（不修改文件）
-go-ansible vault view secrets.yml
+ansible-go vault view secrets.yml
 ```
 
 `view` 不修改磁盘上的文件，只在终端显示解密后的内容。
@@ -288,7 +288,7 @@ go-ansible vault view secrets.yml
 
 ```bash
 # 编辑加密文件
-go-ansible vault edit secrets.yml
+ansible-go vault edit secrets.yml
 ```
 
 `edit` 的内部流程：
@@ -301,7 +301,7 @@ go-ansible vault edit secrets.yml
 
 ```bash
 # 更换加密密码
-go-ansible vault rekey secrets.yml
+ansible-go vault rekey secrets.yml
 ```
 
 `rekey` 的内部流程：
@@ -315,7 +315,7 @@ go-ansible vault rekey secrets.yml
 
 ```bash
 # 加密字符串并输出
-go-ansible vault encrypt_string 'SuperSecret123!' --name 'db_password'
+ansible-go vault encrypt_string 'SuperSecret123!' --name 'db_password'
 
 # 输出（可直接粘贴到 YAML 中）：
 # db_password: !vault |
@@ -346,25 +346,25 @@ Vault ID 允许为不同的加密数据使用不同的密码。每个加密文�
 
 ```bash
 # 使用 prod 密码加密
-go-ansible vault encrypt --vault-id prod@prompt prod_secrets.yml
+ansible-go vault encrypt --vault-id prod@prompt prod_secrets.yml
 
 # 使用 dev 密码加密
-go-ansible vault encrypt --vault-id dev@prompt dev_secrets.yml
+ansible-go vault encrypt --vault-id dev@prompt dev_secrets.yml
 
 # 使用密码文件加密
-go-ansible vault encrypt --vault-id prod@/path/to/prod_pass prod_secrets.yml
+ansible-go vault encrypt --vault-id prod@/path/to/prod_pass prod_secrets.yml
 ```
 
 ### 5.3 执行时指定多个 Vault ID
 
 ```bash
-go-ansible playbook site.yml \
+ansible-go playbook site.yml \
   --vault-id prod@prompt \
   --vault-id dev@prompt \
   --vault-id shared@/path/to/shared_pass
 ```
 
-执行时，go-ansible 会：
+执行时，ansible-go 会：
 1. 读取加密文件头部的 Vault ID
 2. 根据 ID 查找对应的密码
 3. 用该密码解密
@@ -381,13 +381,13 @@ go-ansible playbook site.yml \
 使用该条目的密码进行解密
 ```
 
-如果找不到匹配的 ID，go-ansible 会尝试用所有提供的密码依次尝试。
+如果找不到匹配的 ID，ansible-go 会尝试用所有提供的密码依次尝试。
 
 ### 5.5 无 ID 的兼容模式
 
 ```bash
 # 传统方式：单一密码，无 ID
-go-ansible vault encrypt --vault-password-file ~/.vault_pass secrets.yml
+ansible-go vault encrypt --vault-password-file ~/.vault_pass secrets.yml
 
 # 文件头部：$ANSIBLE_VAULT;1.1;AES256（无 ID 部分）
 ```
@@ -400,7 +400,7 @@ go-ansible vault encrypt --vault-password-file ~/.vault_pass secrets.yml
 
 ### 6.1 优先级顺序
 
-go-ansible 按以下优先级查找 Vault 密码（从高到低）：
+ansible-go 按以下优先级查找 Vault 密码（从高到低）：
 
 ```
 1. --vault-password-file 命令行参数
@@ -438,7 +438,7 @@ echo "MyVaultPassword123!"
 
 ```bash
 chmod +x ~/.vault_pass.sh
-go-ansible vault encrypt --vault-password-file ~/.vault_pass.sh secrets.yml
+ansible-go vault encrypt --vault-password-file ~/.vault_pass.sh secrets.yml
 ```
 
 可执行文件的优势：可以从外部密钥管理系统动态获取密码。
@@ -506,7 +506,7 @@ func (m *PasswordManager) GetPassword(vaultID string) (string, error)
 
 ### 7.1 vars_files 透明解密
 
-当 Playbook 引用的变量文件是 Vault 加密的，go-ansible 自动解密：
+当 Playbook 引用的变量文件是 Vault 加密的，ansible-go 自动解密：
 
 ```yaml
 # site.yml
@@ -549,7 +549,7 @@ inventory/
         └── vault.yml        # 加密的主机变量
 ```
 
-go-ansible 在加载 inventory 时，自动识别并解密 `$ANSIBLE_VAULT` 头的文件。
+ansible-go 在加载 inventory 时，自动识别并解密 `$ANSIBLE_VAULT` 头的文件。
 
 ### 7.3 内联加密字符串
 
@@ -576,7 +576,7 @@ api_key: !vault |
   ...
 ```
 
-go-ansible 需要在 YAML 解析阶段识别 `!vault` 标签并解密。
+ansible-go 需要在 YAML 解析阶段识别 `!vault` 标签并解密。
 
 ### 7.4 加密整个文件 vs 内联加密字符串
 
@@ -708,7 +708,7 @@ func (m *PasswordManager) GetAllPasswords() ([]string, error)
 // 测试向量：确保与 Ansible 兼容
 func TestVaultCompatibility(t *testing.T) {
     // 使用已知的密码和明文，验证加密结果能被 Ansible 解密
-    // 使用 Ansible 加密的文件，验证能被 go-ansible 解密
+    // 使用 Ansible 加密的文件，验证能被 ansible-go 解密
 }
 
 // 测试 round-trip：加密 → 解密 → 原文一致
@@ -765,8 +765,8 @@ func TestVaultWrongPassword(t *testing.T) {
 - 密码来源：优先级正确
 
 **兼容性测试**：
-- 用 Ansible 加密的文件，go-ansible 能解密
-- 用 go-ansible 加密的文件，Ansible 能解密
+- 用 Ansible 加密的文件，ansible-go 能解密
+- 用 ansible-go 加密的文件，Ansible 能解密
 
 ---
 

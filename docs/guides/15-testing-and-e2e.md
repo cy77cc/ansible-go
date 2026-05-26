@@ -2,7 +2,7 @@
 
 > 阶段：P14 | 设计文档引用：第二十章
 
-本文件描述 go-ansible 项目的完整测试策略，包括测试分层、单元测试模式、模块测试、集成测试、E2E 测试、测试辅助设施以及质量保障。
+本文件描述 ansible-go 项目的完整测试策略，包括测试分层、单元测试模式、模块测试、集成测试、E2E 测试、测试辅助设施以及质量保障。
 
 ---
 
@@ -24,7 +24,7 @@
 
 ### 1.1 三层测试模型
 
-go-ansible 采用经典的三层测试金字塔：
+ansible-go 采用经典的三层测试金字塔：
 
 ```
           ┌─────────┐
@@ -78,7 +78,7 @@ make bench              # 基准测试
 
 ### 2.1 表驱动测试（Table-Driven Tests）
 
-go-ansible 统一使用 Go 标准的表驱动测试模式：
+ansible-go 统一使用 Go 标准的表驱动测试模式：
 
 ```go
 // 示例：inventory 包的主机模式匹配测试
@@ -750,15 +750,15 @@ func TestE2E_SimplePlaybook(t *testing.T) {
     inventoryPath := filepath.Join(t.TempDir(), "inventory.ini")
     os.WriteFile(inventoryPath, []byte(inventoryContent), 0644)
 
-    // 执行 go-ansible
-    cmd := exec.Command("go-ansible", "playbook",
+    // 执行 ansible-go
+    cmd := exec.Command("ansible-go", "playbook",
         "-i", inventoryPath,
         playbookPath,
     )
     output, err := cmd.CombinedOutput()
 
     if err != nil {
-        t.Fatalf("go-ansible failed: %v\nOutput:\n%s", err, output)
+        t.Fatalf("ansible-go failed: %v\nOutput:\n%s", err, output)
     }
 
     // 验证输出包含期望内容
@@ -802,9 +802,9 @@ func TestE2E_DockerSSH(t *testing.T) {
 func startSSHContainer(t *testing.T) string {
     t.Helper()
     cmd := exec.Command("docker", "run", "-d",
-        "--name", "go-ansible-test-"+t.Name(),
+        "--name", "ansible-go-test-"+t.Name(),
         "-p", "0:22",
-        "go-ansible-test-sshd:latest",
+        "ansible-go-test-sshd:latest",
     )
     output, err := cmd.Output()
     if err != nil {
@@ -926,12 +926,12 @@ testdata/
   tasks:
     - name: Create temp file
       file:
-        path: /tmp/go-ansible-test
+        path: /tmp/ansible-go-test
         state: touch
 
     - name: Verify file exists
       stat:
-        path: /tmp/go-ansible-test
+        path: /tmp/ansible-go-test
       register: file_stat
 
     - name: Assert file exists

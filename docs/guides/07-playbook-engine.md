@@ -15,8 +15,8 @@ Playbook 是 Ansible 的编排语言。如果说模块是单个"动词"，Playbo
 Ad-hoc 命令适合一次性操作：
 
 ```bash
-go-ansible webservers -m yum -a "name=nginx state=present"
-go-ansible webservers -m service -a "name=nginx state=started"
+ansible-go webservers -m yum -a "name=nginx state=present"
+ansible-go webservers -m service -a "name=nginx state=started"
 ```
 
 Playbook 将这些操作组织为可重复、可版本控制的声明式配置：
@@ -841,13 +841,13 @@ tasks:
 
 ```bash
 # 只执行带 install 标签的任务
-go-ansible playbook site.yml --tags install
+ansible-go playbook site.yml --tags install
 
 # 执行多个标签（或关系）
-go-ansible playbook site.yml --tags "install,configure"
+ansible-go playbook site.yml --tags "install,configure"
 
 # 跳过带 install 标签的任务
-go-ansible playbook site.yml --skip-tags install
+ansible-go playbook site.yml --skip-tags install
 ```
 
 ### 7.4 特殊标签
@@ -874,11 +874,11 @@ tasks:
 
 ```bash
 # 即使 --tags deploy，带 always 标签的任务也会执行
-go-ansible playbook site.yml --tags deploy
+ansible-go playbook site.yml --tags deploy
 # 输出: Always, Normal (跳过 never)
 
 # 只有显式 --tags never 才会执行
-go-ansible playbook site.yml --tags never
+ansible-go playbook site.yml --tags never
 # 输出: Rarely needed (always 仍会执行)
 ```
 

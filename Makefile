@@ -6,10 +6,10 @@ LDFLAGS := -X main.Version=$(VERSION) -X main.BuildTime=$(BUILD_TIME) -X main.Co
 .PHONY: build install clean test test-coverage lint fmt vet
 
 build:
-	go build -ldflags "$(LDFLAGS)" -o bin/go-ansible ./cmd/go-ansible
+	go build -ldflags "$(LDFLAGS)" -o bin/ansible-go ./cmd/ansible-go
 
 install:
-	go install -ldflags "$(LDFLAGS)" ./cmd/go-ansible
+	go install -ldflags "$(LDFLAGS)" ./cmd/ansible-go
 
 clean:
 	rm -rf bin/ coverage.out

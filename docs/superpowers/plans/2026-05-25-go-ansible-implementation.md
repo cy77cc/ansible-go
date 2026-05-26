@@ -1,4 +1,4 @@
-# go-ansible Implementation Plan
+# ansible-go Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.21+, cobra (CLI), golang.org/x/crypto/ssh (SSH), text/template + Sprig (templates), gopkg.in/yaml.v3 (YAML), github.com/fatih/color (terminal output)
 
-**Spec:** `docs/superpowers/specs/2026-05-25-go-ansible-design.md`
+**Spec:** `docs/superpowers/specs/2026-05-25-ansible-go-design.md`
 
 ---
 
@@ -25,7 +25,7 @@
 
 ```bash
 cd /root/project/ansible-go
-go mod init github.com/yourname/go-ansible
+go mod init github.com/yourname/ansible-go
 ```
 
 - [ ] **Step 2: Create .gitignore**
@@ -49,10 +49,10 @@ LDFLAGS := -X main.Version=$(VERSION) -X main.BuildTime=$(BUILD_TIME) -X main.Co
 .PHONY: build install clean test test-coverage lint fmt vet
 
 build:
-	go build -ldflags "$(LDFLAGS)" -o bin/go-ansible ./cmd/go-ansible
+	go build -ldflags "$(LDFLAGS)" -o bin/ansible-go ./cmd/ansible-go
 
 install:
-	go install -ldflags "$(LDFLAGS)" ./cmd/go-ansible
+	go install -ldflags "$(LDFLAGS)" ./cmd/ansible-go
 
 clean:
 	rm -rf bin/ coverage.out
@@ -91,7 +91,7 @@ git commit -m "chore: initialize go module with Makefile"
 ### Task 0.2: CLI Root Command with Global Flags
 
 **Files:**
-- Create: `cmd/go-ansible/main.go`
+- Create: `cmd/ansible-go/main.go`
 - Create: `internal/cli/root.go`
 - Create: `internal/cli/root_test.go`
 
@@ -117,8 +117,8 @@ func TestRootCommand_HasVersionFlag(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	output := buf.String()
-	if !strings.Contains(output, "go-ansible") {
-		t.Errorf("expected 'go-ansible' in version output, got: %s", output)
+	if !strings.Contains(output, "ansible-go") {
+		t.Errorf("expected 'ansible-go' in version output, got: %s", output)
 	}
 }
 
@@ -196,9 +196,9 @@ var Opts GlobalOptions
 
 func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "go-ansible",
+		Use:   "ansible-go",
 		Short: "Go implementation of Ansible",
-		Long:  "go-ansible is a tool for managing Linux servers over SSH, compatible with Ansible playbook format.",
+		Long:  "ansible-go is a tool for managing Linux servers over SSH, compatible with Ansible playbook format.",
 		Version: fmt.Sprintf("%s (built: %s, commit: %s)", Version, BuildTime, Commit),
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -237,10 +237,10 @@ func Execute() {
 - [ ] **Step 4: Create main.go entry point**
 
 ```go
-// cmd/go-ansible/main.go
+// cmd/ansible-go/main.go
 package main
 
-import "github.com/yourname/go-ansible/internal/cli"
+import "github.com/yourname/ansible-go/internal/cli"
 
 var (
 	Version   string
@@ -268,14 +268,14 @@ Expected: PASS
 - [ ] **Step 6: Verify CLI works**
 
 ```bash
-go run ./cmd/go-ansible --help
-go run ./cmd/go-ansible --version
+go run ./cmd/ansible-go --help
+go run ./cmd/ansible-go --version
 ```
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add cmd/go-ansible/main.go internal/cli/root.go internal/cli/root_test.go go.mod go.sum
+git add cmd/ansible-go/main.go internal/cli/root.go internal/cli/root_test.go go.mod go.sum
 git commit -m "feat: add CLI root command with global flags"
 ```
 
@@ -506,9 +506,9 @@ Edit `internal/cli/root.go` — add to `NewRootCmd()` before `return cmd`:
 - [ ] **Step 4: Verify all commands show in help**
 
 ```bash
-go run ./cmd/go-ansible --help
-go run ./cmd/go-ansible inventory --help
-go run ./cmd/go-ansible vault --help
+go run ./cmd/ansible-go --help
+go run ./cmd/ansible-go inventory --help
+go run ./cmd/ansible-go vault --help
 ```
 
 - [ ] **Step 5: Commit**
@@ -1964,7 +1964,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/yourname/go-ansible/internal/inventory"
+	"github.com/yourname/ansible-go/internal/inventory"
 )
 
 func NewInventoryCmd() *cobra.Command {
@@ -2084,10 +2084,10 @@ func printGraph(w interface{ Write([]byte) (int, error) }, g *inventory.Group, d
 - [ ] **Step 6: Verify CLI**
 
 ```bash
-go run ./cmd/go-ansible inventory list -i testdata/hosts.ini
-go run ./cmd/go-ansible inventory list -i testdata/hosts.yml
-go run ./cmd/go-ansible inventory host web1 -i testdata/hosts.ini
-go run ./cmd/go-ansible inventory graph -i testdata/hosts.ini
+go run ./cmd/ansible-go inventory list -i testdata/hosts.ini
+go run ./cmd/ansible-go inventory list -i testdata/hosts.yml
+go run ./cmd/ansible-go inventory host web1 -i testdata/hosts.ini
+go run ./cmd/ansible-go inventory graph -i testdata/hosts.ini
 ```
 
 - [ ] **Step 7: Commit**
@@ -3073,7 +3073,7 @@ func FuncMap() template.FuncMap {
 func Render(tmplStr string, vars map[string]any) (string, error) {
 	processed := preprocess(tmplStr)
 
-	t, err := template.New("go-ansible").Funcs(FuncMap()).Parse(processed)
+	t, err := template.New("ansible-go").Funcs(FuncMap()).Parse(processed)
 	if err != nil {
 		return "", fmt.Errorf("template parse error: %w", err)
 	}
@@ -3237,7 +3237,7 @@ Expected: FAIL
 package modules
 
 import (
-	"github.com/yourname/go-ansible/internal/connection"
+	"github.com/yourname/ansible-go/internal/connection"
 )
 
 // ExecContext provides context for module execution.
@@ -3566,7 +3566,7 @@ func (m *AsyncStatusModule) Run(ctx ExecContext) (Result, error) {
 		mode = fmt.Sprintf("%v", v)
 	}
 
-	asyncDir := filepath.Join(os.TempDir(), ".go-ansible_async", jid)
+	asyncDir := filepath.Join(os.TempDir(), ".ansible-go_async", jid)
 
 	if mode == "cleanup" {
 		os.RemoveAll(asyncDir)
@@ -3811,8 +3811,8 @@ Each module follows the same pattern as Task 4.1:
 ## File Structure Summary
 
 ```
-go-ansible/
-├── cmd/go-ansible/main.go
+ansible-go/
+├── cmd/ansible-go/main.go
 ├── internal/
 │   ├── cli/
 │   │   ├── root.go

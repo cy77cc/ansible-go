@@ -2,7 +2,7 @@
 
 > 阶段：P8 | 设计文档引用：第五章 5.5-5.6、第二十二章
 
-本章覆盖 go-ansible 中三个紧密相关的主题：Handler 通知机制、Block/Rescue/Always
+本章覆盖 ansible-go 中三个紧密相关的主题：Handler 通知机制、Block/Rescue/Always
 结构化错误处理、以及全局错误分类与退出码体系。它们共同构成了 Playbook 执行引擎
 的"安全网"——确保任务失败时有可控的恢复路径，任务成功时有可靠的后续动作触发。
 
@@ -161,7 +161,7 @@ tasks:
 - Handler 只在当前 Play 的作用域内有效
 - Handler 之间不能相互 notify
 - Handler 执行失败会阻止后续 Handler 执行（除非使用 `listen` + `force_handlers`）
-- Handler 不能使用 `loop`（某些 Ansible 版本已支持，go-ansible 初期不实现）
+- Handler 不能使用 `loop`（某些 Ansible 版本已支持，ansible-go 初期不实现）
 
 ---
 
@@ -398,7 +398,7 @@ Play 作用域
 
 ## 4. 错误分类
 
-go-ansible 将所有错误分为四个级别，决定错误的传播范围和处理方式。
+ansible-go 将所有错误分为四个级别，决定错误的传播范围和处理方式。
 
 ### 4.1 FATAL — 致命错误
 
@@ -482,7 +482,7 @@ type ExecutionError struct {
 
 ## 5. 退出码
 
-go-ansible 的退出码遵循 Ansible 兼容规范，便于 CI/CD 集成：
+ansible-go 的退出码遵循 Ansible 兼容规范，便于 CI/CD 集成：
 
 | 退出码 | 含义 | 触发条件 |
 |--------|------|----------|
@@ -516,7 +516,7 @@ func DetermineExitCode(stats PlayStats) ExitCode
 
 ```bash
 #!/bin/bash
-go-ansible playbook deploy.yml
+ansible-go playbook deploy.yml
 EXIT_CODE=$?
 
 case $EXIT_CODE in
@@ -591,7 +591,7 @@ exit $EXIT_CODE
 
 ### 6.3 Retry 文件
 
-当 Playbook 执行有主机失败时，go-ansible 自动生成 retry 文件：
+当 Playbook 执行有主机失败时，ansible-go 自动生成 retry 文件：
 
 ```
 # deploy.retry
@@ -606,11 +606,11 @@ db2
 
 ```bash
 # 原始执行
-go-ansible playbook deploy.yml
+ansible-go playbook deploy.yml
 # 输出：ERROR! 3 hosts failed
 
 # 仅重试失败的主机
-go-ansible playbook deploy.yml --limit @deploy.retry
+ansible-go playbook deploy.yml --limit @deploy.retry
 ```
 
 ### 6.4 Retry 文件的生命周期

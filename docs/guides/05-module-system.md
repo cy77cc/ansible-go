@@ -47,7 +47,7 @@ Ansible 拥有数百个模块，按功能可分为以下几大类：
 模块在远程主机上执行（或在本地编排后通过 SSH 发送命令），执行完毕后进程退出。
 插件（Plugin）则运行在控制端进程内部，提供连接、回调、查找等扩展能力。
 
-在 go-ansible 的设计中，模块是**本地编排 + SSH 命令**模式：模块在本地根据参数生成
+在 ansible-go 的设计中，模块是**本地编排 + SSH 命令**模式：模块在本地根据参数生成
 shell 命令，通过 SSH 连接在远程执行，收集输出后解析为统一结果。
 
 ---
@@ -80,12 +80,12 @@ shell 命令，通过 SSH 连接在远程执行，收集输出后解析为统一
 - **JSON 输出**：模块以 JSON 格式输出结果到 stdout
 - **Python 依赖**：远程主机需要 Python 运行时
 
-### 2.2 go-ansible 的执行模型
+### 2.2 ansible-go 的执行模型
 
-go-ansible 采用完全不同的策略——**本地编排 + SSH 命令**：
+ansible-go 采用完全不同的策略——**本地编排 + SSH 命令**：
 
 ```
-go-ansible 控制节点                    远程主机
+ansible-go 控制节点                    远程主机
 ──────────────────                    ────────
 1. 接收模块参数
 2. 模块根据参数生成 shell 命令
@@ -98,7 +98,7 @@ go-ansible 控制节点                    远程主机
 
 **核心区别：**
 
-| 维度 | Ansible | go-ansible |
+| 维度 | Ansible | ansible-go |
 |------|---------|------------|
 | 模块语言 | Python 脚本 | Go 函数 |
 | 传输方式 | 拷贝脚本到远程 | 不传输，直接执行命令 |
@@ -327,7 +327,7 @@ func init() {
 主程序通过**空白导入**（blank import）驱动所有模块注册：
 
 ```go
-// 文件：cmd/go-ansible/main.go
+// 文件：cmd/ansible-go/main.go
 
 package main
 
@@ -486,7 +486,7 @@ Check Mode（也叫 Dry Run 或干跑模式）允许用户预览 Playbook 将会
 
 ```bash
 # 运行 check mode
-go-ansible playbook site.yml --check --diff
+ansible-go playbook site.yml --check --diff
 ```
 
 输出示例：
@@ -581,7 +581,7 @@ skipping: [web1]  Module 'xxx' does not support check mode
 
 **格式一：key=value 字符串（ad-hoc 模式）**
 ```bash
-go-ansible all -m copy -a "src=/local/file dest=/remote/file mode=0644"
+ansible-go all -m copy -a "src=/local/file dest=/remote/file mode=0644"
 ```
 
 **格式二：YAML dict（Playbook 模式）**
@@ -862,7 +862,7 @@ func GetListArg(args map[string]any, key string) ([]any, error)
 
 **验收标准：**
 - [ ] ping 模块正确注册到全局注册表
-- [ ] 通过 ad-hoc 命令可执行：`go-ansible all -m ping`
+- [ ] 通过 ad-hoc 命令可执行：`ansible-go all -m ping`
 - [ ] Check Mode 下正常工作
 - [ ] 单元测试通过
 

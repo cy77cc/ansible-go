@@ -2,7 +2,7 @@
 
 > 阶段：P13 | 设计文档引用：第十四章、第十五章
 
-本文件描述 go-ansible 中三大模板扩展机制：过滤器（Filters）、测试插件（Tests）和查找插件（Lookups）。它们是模板引擎的核心扩展点，使 go-ansible 能够处理复杂的运维数据转换逻辑。
+本文件描述 ansible-go 中三大模板扩展机制：过滤器（Filters）、测试插件（Tests）和查找插件（Lookups）。它们是模板引擎的核心扩展点，使 ansible-go 能够处理复杂的运维数据转换逻辑。
 
 ---
 
@@ -30,10 +30,10 @@ msg: "Hello {{ name | upper }}"
 items: "{{ list | unique | sort }}"
 ```
 
-在 go-ansible 中，使用 Go `text/template` 管道语法：
+在 ansible-go 中，使用 Go `text/template` 管道语法：
 
 ```yaml
-# Go template 语法（go-ansible）
+# Go template 语法（ansible-go）
 msg: "Hello {{ .name | upper }}"
 items: "{{ .list | unique | sort }}"
 ```
@@ -55,7 +55,7 @@ items: "{{ .list | unique | sort }}"
 
 ### 1.3 Sprig 函数库
 
-go-ansible 使用 [Sprig](https://github.com/Masterminds/sprig) 作为基础函数库（与 Helm 相同）。Sprig 提供了 70+ 个常用函数：
+ansible-go 使用 [Sprig](https://github.com/Masterminds/sprig) 作为基础函数库（与 Helm 相同）。Sprig 提供了 70+ 个常用函数：
 
 - 字符串操作：`trim`, `upper`, `lower`, `replace`, `contains`, `hasPrefix`
 - 数学运算：`add`, `sub`, `mul`, `div`, `max`, `min`
@@ -66,7 +66,7 @@ go-ansible 使用 [Sprig](https://github.com/Masterminds/sprig) 作为基础函�
 - 日期时间：`now`, `date`, `dateInZone`
 - 路径操作：`base`, `dir`, `ext`, `clean`
 
-go-ansible 在 Sprig 基础上添加 Ansible 特有过滤器，以下章节详述。
+ansible-go 在 Sprig 基础上添加 Ansible 特有过滤器，以下章节详述。
 
 ---
 
@@ -468,7 +468,7 @@ when: my_var is defined
 when: version is version('20.04', '>=')
 ```
 
-在 go-ansible 的 Go template 中，测试通过管道函数实现：
+在 ansible-go 的 Go template 中，测试通过管道函数实现：
 
 ```yaml
 when: "{{ .result | is_success }}"

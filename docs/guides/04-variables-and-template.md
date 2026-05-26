@@ -1,8 +1,8 @@
-# go-ansible 教学文档 04：变量系统与模板引擎
+# ansible-go 教学文档 04：变量系统与模板引擎
 
 > **阶段：** P3 | **设计文档引用：** 第八章 模板引擎、第九章 变量系统
 >
-> 本文档覆盖 go-ansible 中变量系统的完整设计——22 层优先级、合并规则、Magic Variables、Facts 收集，以及模板引擎的 Go text/template + Sprig 方案。
+> 本文档覆盖 ansible-go 中变量系统的完整设计——22 层优先级、合并规则、Magic Variables、Facts 收集，以及模板引擎的 Go text/template + Sprig 方案。
 
 ---
 
@@ -57,7 +57,7 @@ Ansible 的变量系统是其最复杂的部分之一：
 
 ### 1.3 设计原则
 
-go-ansible 的变量系统遵循三个原则：
+ansible-go 的变量系统遵循三个原则：
 
 1. **不可变（Immutable）**：变量上下文通过深拷贝传递，避免并发竞争
 2. **分层覆盖（Layered Override）**：高优先级覆盖低优先级，dict 递归合并
@@ -344,16 +344,16 @@ tasks:
 
 ```bash
 # 命令行传入
-go-ansible playbook site.yml -e "http_port=1234"
+ansible-go playbook site.yml -e "http_port=1234"
 
 # JSON 格式
-go-ansible playbook site.yml -e '{"http_port": 1234, "debug": true}'
+ansible-go playbook site.yml -e '{"http_port": 1234, "debug": true}'
 
 # 从文件加载
-go-ansible playbook site.yml -e @extra_vars.yml
+ansible-go playbook site.yml -e @extra_vars.yml
 
 # 多个 -e 叠加
-go-ansible playbook site.yml -e "a=1" -e "b=2"
+ansible-go playbook site.yml -e "a=1" -e "b=2"
 ```
 
 `extra-vars` 是"上帝模式"——没有任何变量可以覆盖它。这是运维人员在紧急情况下覆盖一切配置的手段。
@@ -628,7 +628,7 @@ Magic Variables 是 Ansible 自动注入的内置变量，不需要用户定义�
 
 ### 4.4 hostvars 的延迟求值
 
-`hostvars` 在 Ansible 中是延迟求值的——只有当你实际访问某台主机的变量时，才会去收集。在 go-ansible 中，由于 Facts 收集是通过 SSH 逐台执行的，`hostvars` 的值在所有主机的 Facts 收集完成后才完整。
+`hostvars` 在 Ansible 中是延迟求值的——只有当你实际访问某台主机的变量时，才会去收集。在 ansible-go 中，由于 Facts 收集是通过 SSH 逐台执行的，`hostvars` 的值在所有主机的 Facts 收集完成后才完整。
 
 ---
 
@@ -677,7 +677,7 @@ Facts 按类别组织，可以通过 `gather_subset` 控制收集哪些类别：
 
 ### 5.3 收集方式
 
-go-ansible 的 Facts 收集通过 SSH 执行预定义的 shell 命令：
+ansible-go 的 Facts 收集通过 SSH 执行预定义的 shell 命令：
 
 ```
 收集项                   Shell 命令
@@ -738,7 +738,7 @@ Facts 注入后的变量等效于 `set_fact` 的优先级（Layer 14），可以
 
 ### 6.1 为什么选择 Go text/template
 
-go-ansible 使用 Go 标准库的 `text/template` + Sprig 函数库，替代 Ansible 的 Jinja2。这是经过权衡的技术决策：
+ansible-go 使用 Go 标准库的 `text/template` + Sprig 函数库，替代 Ansible 的 Jinja2。这是经过权衡的技术决策：
 
 | 特性 | Jinja2 (Python) | Go text/template |
 |------|-----------------|------------------|
@@ -750,7 +750,7 @@ go-ansible 使用 Go 标准库的 `text/template` + Sprig 函数库，替代 Ans
 | 循环 | `{% for i in items %}` | `{{ range .items }}` |
 | 兼容性 | Ansible 原生 | 不兼容 Jinja2 |
 
-**关键差异**：go-ansible 不兼容 Jinja2 语法，用户需要使用 Go template 语法。
+**关键差异**：ansible-go 不兼容 Jinja2 语法，用户需要使用 Go template 语法。
 
 ### 6.2 基本语法对照
 
@@ -833,7 +833,7 @@ func Render(tmplStr string, vars map[string]any) (string, error) {
 
 ### 7.1 什么是 Sprig
 
-Sprig 是 Helm 使用的 Go template 函数库，提供了 70+ 个常用函数。go-ansible 使用 Sprig 来补充 Go 标准库 `text/template` 缺少的常用函数。
+Sprig 是 Helm 使用的 Go template 函数库，提供了 70+ 个常用函数。ansible-go 使用 Sprig 来补充 Go 标准库 `text/template` 缺少的常用函数。
 
 ```
 go get github.com/Masterminds/sprig/v3
@@ -986,7 +986,7 @@ Go text/template 需要 `.` 前缀：
 msg: "Hello, {{ .name }}!"
 ```
 
-为了兼容 Ansible 的使用习惯，go-ansible 引擎在渲染前自动将 `{{ name }}` 转换为 `{{ .name }}`。
+为了兼容 Ansible 的使用习惯，ansible-go 引擎在渲染前自动将 `{{ name }}` 转换为 `{{ .name }}`。
 
 ### 8.2 预处理规则
 
@@ -1425,8 +1425,8 @@ go test ./internal/template/ -v
 ### A.2 查看特定变量来源
 
 ```bash
-# 使用 go-ansible 的 verbose 模式
-go-ansible playbook site.yml -vvv
+# 使用 ansible-go 的 verbose 模式
+ansible-go playbook site.yml -vvv
 # -v:   task 结果
 # -vv:  变量值、模板渲染
 # -vvv: 完整调试信息
@@ -1520,5 +1520,5 @@ go-ansible playbook site.yml -vvv
 - [Sprig 函数库文档](https://masterminds.github.io/sprig/)
 - [Ansible 官方文档 - 变量](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_variables.html)
 - [Ansible 官方文档 - Facts](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_vars_facts.html)
-- 设计文档：`docs/superpowers/specs/2026-05-25-go-ansible-design.md` 第八章、第九章
-- 实现计划：`docs/superpowers/plans/2026-05-25-go-ansible-implementation.md` Phase P3
+- 设计文档：`docs/superpowers/specs/2026-05-25-ansible-go-design.md` 第八章、第九章
+- 实现计划：`docs/superpowers/plans/2026-05-25-ansible-go-implementation.md` Phase P3

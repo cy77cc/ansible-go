@@ -2,7 +2,7 @@
 
 > 阶段：P12 | 设计文档引用：第十三章
 
-本文件描述 go-ansible 中回调插件（Callback Plugin）的设计、输出格式、退出码处理、颜色终端支持以及日志系统。
+本文件描述 ansible-go 中回调插件（Callback Plugin）的设计、输出格式、退出码处理、颜色终端支持以及日志系统。
 
 ---
 
@@ -23,7 +23,7 @@
 
 ### 1.1 事件驱动模型
 
-回调插件是 go-ansible 输出系统的核心。引擎在执行生命周期的关键节点触发事件，所有注册的回调插件收到通知并执行各自的输出逻辑。
+回调插件是 ansible-go 输出系统的核心。引擎在执行生命周期的关键节点触发事件，所有注册的回调插件收到通知并执行各自的输出逻辑。
 
 这种事件驱动设计实现了**关注点分离**：引擎只负责调度和执行，输出格式完全由回调插件决定。用户可以通过配置切换不同的输出格式，而无需修改引擎代码。
 
@@ -85,7 +85,7 @@ Playbook 执行开始
 
 ### 1.4 多回调插件共存
 
-go-ansible 支持同时注册多个回调插件。引擎维护一个回调列表，事件触发时遍历调用。典型场景：
+ansible-go 支持同时注册多个回调插件。引擎维护一个回调列表，事件触发时遍历调用。典型场景：
 
 - `default` — 标准终端输出
 - `timer` — 在后台记录耗时
@@ -104,7 +104,7 @@ callback_whitelist = timer, log_plays
 
 ## 2. Default Callback — 标准输出格式
 
-Default Callback 是 go-ansible 的默认输出格式，忠实复刻 Ansible 的终端输出风格。
+Default Callback 是 ansible-go 的默认输出格式，忠实复刻 Ansible 的终端输出风格。
 
 ### 2.1 PLAY 横幅
 
@@ -307,7 +307,7 @@ Playbook executed in 0:02:34.567
 
 ### 4.1 退出码映射
 
-go-ansible 的退出码基于 Playbook 执行的聚合结果：
+ansible-go 的退出码基于 Playbook 执行的聚合结果：
 
 | 条件 | 退出码 | 说明 |
 |------|--------|------|
@@ -345,7 +345,7 @@ go-ansible 的退出码基于 Playbook 执行的聚合结果：
 
 ### 5.1 ANSI 颜色码
 
-go-ansible 使用标准 ANSI 转义序列实现终端颜色：
+ansible-go 使用标准 ANSI 转义序列实现终端颜色：
 
 | 颜色 | 前景色码 | 重置码 |
 |------|---------|--------|
@@ -358,7 +358,7 @@ go-ansible 使用标准 ANSI 转义序列实现终端颜色：
 
 ### 5.2 TTY 检测
 
-go-ansible 在启动时检测 stdout 是否为 TTY（终端设备）：
+ansible-go 在启动时检测 stdout 是否为 TTY（终端设备）：
 
 ```go
 // 使用 github.com/mattn/go-isatty
@@ -554,7 +554,7 @@ type Task struct {
 
 ### 7.1 日志级别
 
-go-ansible 使用分层日志系统，每个级别有对应的详细程度：
+ansible-go 使用分层日志系统，每个级别有对应的详细程度：
 
 | 级别 | CLI 标志 | 输出内容 | 何时使用 |
 |------|---------|---------|---------|
@@ -587,7 +587,7 @@ go-ansible 使用分层日志系统，每个级别有对应的详细程度：
 ```ini
 # ansible.cfg
 [defaults]
-log_path = /var/log/go-ansible.log
+log_path = /var/log/ansible-go.log
 ```
 
 未配置 `log_path` 时，日志输出到 stderr。

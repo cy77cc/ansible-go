@@ -1,8 +1,8 @@
-# go-ansible 教学文档 03：连接层
+# ansible-go 教学文档 03：连接层
 
 > **阶段：** P2 | **设计文档引用：** 第七章 连接层
 >
-> 本文档覆盖 go-ansible 中连接层的完整设计——SSH 连接原理、认证机制、命令执行模型、文件传输、提权机制，以及 Go 实现要点。
+> 本文档覆盖 ansible-go 中连接层的完整设计——SSH 连接原理、认证机制、命令执行模型、文件传输、提权机制，以及 Go 实现要点。
 
 ---
 
@@ -70,11 +70,11 @@
 |------|----------|----------|
 | `ssh` | 默认，管理远程主机 | `golang.org/x/crypto/ssh` |
 | `local` | 管理本机、网络设备 | `os/exec` |
-| `paramiko` | Python SSH 库（Ansible 特有） | go-ansible 不实现 |
-| `winrm` | Windows 远程管理 | go-ansible 不实现（仅 Linux） |
+| `paramiko` | Python SSH 库（Ansible 特有） | ansible-go 不实现 |
+| `winrm` | Windows 远程管理 | ansible-go 不实现（仅 Linux） |
 | `docker` | Docker 容器管理 | 后续扩展 |
 
-go-ansible 只实现 `ssh` 和 `local` 两种连接类型。
+ansible-go 只实现 `ssh` 和 `local` 两种连接类型。
 
 ---
 
@@ -133,12 +133,12 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s
 - 显著减少多 task 场景的连接开销
 - ControlPersist=60s 表示空闲连接保持 60 秒
 
-**go-ansible 的方案**：
+**ansible-go 的方案**：
 
-go-ansible 通过 `golang.org/x/crypto/ssh` 库在进程内维护 SSH 连接，天然实现连接复用——每个 `SSHConnection` 对象持有一个 `*ssh.Client`，多 task 串行复用同一个 client，无需额外的 socket 文件。
+ansible-go 通过 `golang.org/x/crypto/ssh` 库在进程内维护 SSH 连接，天然实现连接复用——每个 `SSHConnection` 对象持有一个 `*ssh.Client`，多 task 串行复用同一个 client，无需额外的 socket 文件。
 
 ```
-go-ansible 的连接复用：
+ansible-go 的连接复用：
   SSHConnection.client (ssh.Client)
       ├── session 1 (task 1)
       ├── session 2 (task 2)
@@ -159,7 +159,7 @@ go-ansible 的连接复用：
 
 ### 3.1 三种认证方式
 
-go-ansible 按以下优先级尝试认证：
+ansible-go 按以下优先级尝试认证：
 
 ```
 优先级 1: SSH Key（最高优先级）
@@ -220,7 +220,7 @@ SSH Agent 是一个后台进程，管理已解锁的密钥。
 5. Agent 代替客户端完成签名
 ```
 
-**go-ansible 的实现**：
+**ansible-go 的实现**：
 
 ```go
 // 通过环境变量 SSH_AUTH_SOCK 检测 Agent
@@ -354,7 +354,7 @@ cmd := `echo "hello world"`
 // /bin/sh -c 'echo "hello world"'
 ```
 
-**go-ansible 的 quoting 策略**：
+**ansible-go 的 quoting 策略**：
 
 ```go
 // shellQuote 用单引号包裹字符串，内部的单引号用 '\'' 转义
@@ -424,12 +424,12 @@ if exitErr, ok := err.(*ssh.ExitError); ok {
 
 只需要 1 次 SSH 操作。
 
-**go-ansible 的方案**：
+**ansible-go 的方案**：
 
-go-ansible 不拷贝模块脚本到远程。它通过 SSH 直接执行命令（如 `yum install nginx -y`），天然等效于 pipelining 模式——一次 SSH 调用完成所有操作。
+ansible-go 不拷贝模块脚本到远程。它通过 SSH 直接执行命令（如 `yum install nginx -y`），天然等效于 pipelining 模式——一次 SSH 调用完成所有操作。
 
 ```go
-// go-ansible 的模块执行模型
+// ansible-go 的模块执行模型
 // 模块在本地生成 shell 命令，通过 SSH 直接执行
 cmd := "yum install nginx -y"
 stdout, stderr, rc, err := conn.Exec(cmd)
@@ -447,7 +447,7 @@ session, err := client.NewSession()
 // session 有 Start() 和 Wait() 方法
 // 但没有内置超时——需要通过 context 控制
 
-// go-ansible 的方案：
+// ansible-go 的方案：
 // 在 conn.Exec() 中通过 channel select 实现超时
 type ExecResult struct {
     Stdout string
@@ -489,7 +489,7 @@ SFTP（SSH File Transfer Protocol）是 SSH 协议的子系统，提供文件传
 | 断点续传 | 支持 | 不支持 |
 | 进度回调 | 支持 | 有限 |
 | 性能 | 稍慢（协议开销） | 略快 |
-| go-ansible | 使用 | 不使用 |
+| ansible-go | 使用 | 不使用 |
 
 ### 5.2 文件传输流程
 
@@ -583,7 +583,7 @@ remoteFile.Chmod(0755)   // 可执行文件
 | `pfexec` | `pfexec cmd` | Solaris |
 | `doas` | `doas cmd` | OpenBSD |
 
-go-ansible 只实现 `sudo` 和 `su`。
+ansible-go 只实现 `sudo` 和 `su`。
 
 ### 6.3 sudo 命令包装
 
@@ -687,7 +687,7 @@ ansible_become_pass=sudo_password
 echo 'secret' | sudo -H -S -u root /bin/sh -c 'cmd'
 
 # 更安全的方式：使用 sudo -S 从 stdin 读取
-# 但 go-ansible 的 echo 管道方式仍可能泄露
+# 但 ansible-go 的 echo 管道方式仍可能泄露
 ```
 
 **最佳实践**：
@@ -815,7 +815,7 @@ Main Thread ────────┼── worker 2 ──→ host2 (task1, t
                     └── worker 5 ──→ host5 (task1, task2, task3, ...)
 ```
 
-### 8.2 go-ansible 的连接池设计
+### 8.2 ansible-go 的连接池设计
 
 ```
 ConnectionPool
@@ -838,7 +838,7 @@ ConnectionPool
 
 ### 8.3 与 OpenSSH ControlMaster 的对比
 
-| 特性 | OpenSSH ControlMaster | go-ansible 连接池 |
+| 特性 | OpenSSH ControlMaster | ansible-go 连接池 |
 |------|----------------------|-------------------|
 | 实现层 | 操作系统 socket 文件 | Go 进程内 map |
 | 跨进程 | 支持 | 不支持 |
@@ -846,7 +846,7 @@ ConnectionPool
 | 持久化 | ControlPersist=60s | 进程退出即销毁 |
 | 性能 | 有 IPC 开销 | 无额外开销 |
 
-go-ansible 的方案更简洁——不需要外部 socket 文件，不需要配置 ControlMaster 参数，进程内的 map 就是连接池。
+ansible-go 的方案更简洁——不需要外部 socket 文件，不需要配置 ControlMaster 参数，进程内的 map 就是连接池。
 
 ### 8.4 Goroutine 调度模型
 
@@ -1168,5 +1168,5 @@ sftp deploy@192.168.1.10
 - [Ansible 官方文档 - Become](https://docs.ansible.com/ansible/latest/become.html)
 - [golang.org/x/crypto/ssh 文档](https://pkg.go.dev/golang.org/x/crypto/ssh)
 - [github.com/pkg/sftp 文档](https://pkg.go.dev/github.com/pkg/sftp)
-- 设计文档：`docs/superpowers/specs/2026-05-25-go-ansible-design.md` 第七章
-- 实现计划：`docs/superpowers/plans/2026-05-25-go-ansible-implementation.md` Phase P2
+- 设计文档：`docs/superpowers/specs/2026-05-25-ansible-go-design.md` 第七章
+- 实现计划：`docs/superpowers/plans/2026-05-25-ansible-go-implementation.md` Phase P2

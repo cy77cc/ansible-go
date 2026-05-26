@@ -1,6 +1,6 @@
-# go-ansible 项目总览
+# ansible-go 项目总览
 
-> 本文档是 go-ansible 系列教学文档的入口，帮助你理解项目全貌、技术选型和学习路径。
+> 本文档是 ansible-go 系列教学文档的入口，帮助你理解项目全貌、技术选型和学习路径。
 
 ---
 
@@ -44,7 +44,7 @@
 - **中文为主**，技术术语保留英文（如 Playbook、Inventory、Handler）
 - **Go 代码**只展示 type/interface 签名，不写函数体
 - **每个文档**遵循统一模板：原理（Why）→ 机制（How）→ Go 实现要点 → 任务拆解 → 参考资料
-- **设计文档**位于 `docs/superpowers/specs/2026-05-25-go-ansible-design.md`，是权威参考
+- **设计文档**位于 `docs/superpowers/specs/2026-05-25-ansible-go-design.md`，是权威参考
 
 ---
 
@@ -240,7 +240,7 @@ Push 架构的优势：
 
 **Go 实现启示**
 
-Push 架构意味着 go-ansible 需要管理大量的 SSH 连接。Go 的 goroutine 模型非常适合这个场景——每个主机一个 goroutine，通过 channel 协调结果。
+Push 架构意味着 ansible-go 需要管理大量的 SSH 连接。Go 的 goroutine 模型非常适合这个场景——每个主机一个 goroutine，通过 channel 协调结果。
 
 ### 3.4 YAML 作为用户界面
 
@@ -279,7 +279,7 @@ Ansible 在标准 YAML 基础上添加了 Jinja2 模板语法：
 
 **Go 实现启示**
 
-go-ansible 使用 Go 的 `text/template` + Sprig 代替 Jinja2。这意味着：
+ansible-go 使用 Go 的 `text/template` + Sprig 代替 Jinja2。这意味着：
 - 语法不兼容——`{{ foo | upper }}`（Jinja2）vs `{{ .foo | upper }}`（Go template）
 - 需要变量前缀预处理——将 `{{ foo }}` 自动转换为 `{{ .foo }}`
 - 功能覆盖——Sprig 提供了大部分 Jinja2 过滤器的等价实现
@@ -385,8 +385,8 @@ Python 版 Ansible：
     ├── 系统库依赖
     └── 虚拟环境管理
 
-Go 版 go-ansible：
-    go-ansible（单个文件，~15MB）
+Go 版 ansible-go：
+    ansible-go（单个文件，~15MB）
     └── 无任何外部依赖
 ```
 
@@ -398,10 +398,10 @@ sudo apt install python3 python3-pip
 pip3 install ansible
 ansible --version  # 确认版本和路径
 
-# go-ansible
-curl -L https://github.com/.../go-ansible-linux-amd64 -o /usr/local/bin/go-ansible
-chmod +x /usr/local/bin/go-ansible
-go-ansible --version  # 直接可用
+# ansible-go
+curl -L https://github.com/.../ansible-go-linux-amd64 -o /usr/local/bin/ansible-go
+chmod +x /usr/local/bin/ansible-go
+ansible-go --version  # 直接可用
 ```
 
 **版本管理对比：**
@@ -414,7 +414,7 @@ pyenv activate ansible-env
 pip install ansible==6.0.0
 
 # Go：直接下载对应版本
-curl -L .../go-ansible-v1.0.0-linux-amd64 -o /usr/local/bin/go-ansible
+curl -L .../ansible-go-v1.0.0-linux-amd64 -o /usr/local/bin/ansible-go
 ```
 
 ### 4.3 goroutine 并发 vs GIL
@@ -482,7 +482,7 @@ for _, host := range hosts {
 | 通信方式 | Pipe/Queue | Channel |
 | 错误处理 | 进程退出码 | error 接口 |
 
-Go 的 goroutine 模型让 go-ansible 可以轻松管理数百台主机的并发执行，而不需要担心进程开销。
+Go 的 goroutine 模型让 ansible-go 可以轻松管理数百台主机的并发执行，而不需要担心进程开销。
 
 ### 4.4 学习价值
 
@@ -510,13 +510,13 @@ Go 的 goroutine 模型让 go-ansible 可以轻松管理数百台主机的并发
 
 ---
 
-## 五、go-ansible 项目定位
+## 五、ansible-go 项目定位
 
 ### 5.1 不是 Fork，是重写
 
-go-ansible 不是 Ansible 的 fork，而是一个从零开始的 Go 语言重写：
+ansible-go 不是 Ansible 的 fork，而是一个从零开始的 Go 语言重写：
 
-| 维度 | Ansible | go-ansible |
+| 维度 | Ansible | ansible-go |
 |------|---------|-----------|
 | 语言 | Python 3 | Go 1.21+ |
 | 代码基础 | 从零编写 | 从零编写 |
@@ -542,7 +542,7 @@ go-ansible 不是 Ansible 的 fork，而是一个从零开始的 Go 语言重写
 
 ### 5.2 目标平台
 
-go-ansible 的目标平台是 **Linux**：
+ansible-go 的目标平台是 **Linux**：
 
 - **控制机**：Linux（amd64/arm64）
 - **目标主机**：仅 Linux 服务器
@@ -583,13 +583,13 @@ go-ansible 的目标平台是 **Linux**：
 # Ansible (Jinja2)
 msg: "Hello {{ name | upper }}, you have {{ items | length }} items"
 
-# go-ansible (text/template + Sprig)
+# ansible-go (text/template + Sprig)
 msg: "Hello {{ .name | upper }}, you have {{ .items | len }} items"
 ```
 
 **变量前缀预处理：**
 
-go-ansible 需要一个预处理器，将 Ansible 风格的 `{{ foo }}` 自动转换为 Go 风格的 `{{ .foo }}`。这个预处理器需要处理边界情况：
+ansible-go 需要一个预处理器，将 Ansible 风格的 `{{ foo }}` 自动转换为 Go 风格的 `{{ .foo }}`。这个预处理器需要处理边界情况：
 - `{{ foo }}` → `{{ .foo }}`
 - `{{ foo.bar }}` → `{{ .foo.bar }}`
 - `{{ foo | upper }}` → `{{ .foo | upper }}`
@@ -604,7 +604,7 @@ go-ansible 需要一个预处理器，将 Ansible 风格的 `{{ foo }}` 自动�
 - Go 官方维护，质量有保障
 - 支持所有 SSH 认证方式（密钥、密码、Agent）
 - 支持 SFTP 文件传输
-- 跨平台（虽然 go-ansible 只支持 Linux 控制机）
+- 跨平台（虽然 ansible-go 只支持 Linux 控制机）
 
 **关键能力：**
 
@@ -635,7 +635,7 @@ type Client struct {
 **命令结构设计：**
 
 ```
-go-ansible
+ansible-go
 ├── <host-pattern>       # ad-hoc 命令
 ├── playbook             # playbook 执行
 ├── inventory            # inventory 管理
@@ -676,7 +676,7 @@ go-ansible
 |------|------|--------|
 | Inventory 解析 | INI/YAML 格式、主机模式匹配 | P0 |
 | SSH 连接 | 认证、命令执行、文件传输 | P0 |
-| Ad-hoc 命令 | `go-ansible all -m ping` | P0 |
+| Ad-hoc 命令 | `ansible-go all -m ping` | P0 |
 | Playbook 执行 | YAML 解析、顺序执行 | P0 |
 | 模块系统 | shell, ping, copy, file 等 | P0 |
 | 变量系统 | 16 级优先级、深合并 | P0 |
@@ -720,11 +720,11 @@ go-ansible
 ```
 P0: 项目骨架 + CLI
     └── 文档：00-overview（本文）+ 01-architecture
-    └── 产出：go-ansible --help 正常工作
+    └── 产出：ansible-go --help 正常工作
 
 P1: Inventory 系统
     └── 文档：02-inventory
-    └── 产出：go-ansible inventory list 正常工作
+    └── 产出：ansible-go inventory list 正常工作
 
 P2: 连接层 (SSH/Local)
     └── 文档：03-connection
@@ -736,11 +736,11 @@ P3: 变量系统 + 模板引擎
 
 P4: 核心模块
     └── 文档：06-modules
-    └── 产出：go-ansible all -m ping 正常工作
+    └── 产出：ansible-go all -m ping 正常工作
 
 P5: Playbook 引擎
     └── 文档：07-engine + 16-minimal-viable-path
-    └── 产出：go-ansible playbook site.yml 执行成功
+    └── 产出：ansible-go playbook site.yml 执行成功
 
 P6: 更多模块
     └── 文档：08-more-modules
@@ -808,7 +808,7 @@ P0 ──→ P1 ──→ P2 ──→ P3 ──→ P4 ──→ P5
 
 **关键路径：** P0 → P1 → P2 → P3 → P4 → P5
 
-这条路径是 go-ansible 能够执行最小 Playbook 的最短路径。其他阶段可以并行或后续添加。
+这条路径是 ansible-go 能够执行最小 Playbook 的最短路径。其他阶段可以并行或后续添加。
 
 ### 8.3 学习建议
 
@@ -828,5 +828,5 @@ P0 ──→ P1 ──→ P2 ──→ P3 ──→ P4 ──→ P5
 - [Sprig 模板函数库](https://masterminds.github.io/sprig/)
 - [golang.org/x/crypto/ssh](https://pkg.go.dev/golang.org/x/crypto/ssh)
 - [cobra CLI 框架](https://cobra.dev/)
-- [设计文档](../superpowers/specs/2026-05-25-go-ansible-design.md)
-- [实现计划](../superpowers/plans/2026-05-25-go-ansible-implementation.md)
+- [设计文档](../superpowers/specs/2026-05-25-ansible-go-design.md)
+- [实现计划](../superpowers/plans/2026-05-25-ansible-go-implementation.md)

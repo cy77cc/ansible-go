@@ -2,9 +2,9 @@
 
 > 阶段：P11 | 设计文档引用：第十一章
 
-本章介绍 go-ansible 的 Collections 体系和 Galaxy 包管理平台集成。Collections
+本章介绍 ansible-go 的 Collections 体系和 Galaxy 包管理平台集成。Collections
 是 Ansible 现代化的模块分发机制，Galaxy 是社区共享 Role 和 Collection 的中心
-平台。理解这两者是扩展 go-ansible 生态能力的关键。
+平台。理解这两者是扩展 ansible-go 生态能力的关键。
 
 ---
 
@@ -36,7 +36,7 @@ Galaxy 提供了标准化的方式：
 
 ```bash
 # 一行命令安装
-go-ansible galaxy install geerlingguy.nginx
+ansible-go galaxy install geerlingguy.nginx
 
 # 声明式管理依赖
 # requirements.yml
@@ -287,79 +287,79 @@ plugin_routing:
 
 ```bash
 # 安装单个 Role
-go-ansible galaxy install geerlingguy.nginx
+ansible-go galaxy install geerlingguy.nginx
 
 # 安装指定版本
-go-ansible galaxy install geerlingguy.nginx,3.1.0
+ansible-go galaxy install geerlingguy.nginx,3.1.0
 
 # 从 requirements.yml 安装
-go-ansible galaxy install -r requirements.yml
+ansible-go galaxy install -r requirements.yml
 
 # 列出已安装的 Role
-go-ansible galaxy list
+ansible-go galaxy list
 
 # 列出特定 Role 信息
-go-ansible galaxy list geerlingguy.nginx
+ansible-go galaxy list geerlingguy.nginx
 
 # 删除已安装的 Role
-go-ansible galaxy remove geerlingguy.nginx
+ansible-go galaxy remove geerlingguy.nginx
 
 # 初始化新 Role
-go-ansible galaxy init my_new_role
+ansible-go galaxy init my_new_role
 ```
 
 ### 4.2 Collection 命令
 
 ```bash
 # 安装单个 Collection
-go-ansible galaxy collection install community.general
+ansible-go galaxy collection install community.general
 
 # 安装指定版本
-go-ansible galaxy collection install community.general:8.0.0
+ansible-go galaxy collection install community.general:8.0.0
 
 # 从 requirements.yml 安装
-go-ansible galaxy collection install -r requirements.yml
+ansible-go galaxy collection install -r requirements.yml
 
 # 安装到指定路径
-go-ansible galaxy collection install community.general -p ./collections
+ansible-go galaxy collection install community.general -p ./collections
 
 # 列出已安装的 Collection
-go-ansible galaxy collection list
+ansible-go galaxy collection list
 
 # 列出特定 Collection 信息
-go-ansible galaxy collection list community.general
+ansible-go galaxy collection list community.general
 
 # 删除已安装的 Collection
-go-ansible galaxy collection remove community.general
+ansible-go galaxy collection remove community.general
 
 # 初始化新 Collection
-go-ansible galaxy collection init my_namespace.my_collection
+ansible-go galaxy collection init my_namespace.my_collection
 ```
 
 ### 4.3 搜索命令
 
 ```bash
 # 搜索 Role
-go-ansible galaxy search nginx
+ansible-go galaxy search nginx
 
 # 搜索 Collection
-go-ansible galaxy collection search nginx
+ansible-go galaxy collection search nginx
 
 # 按作者搜索
-go-ansible galaxy search --author geerlingguy
+ansible-go galaxy search --author geerlingguy
 
 # 按标签搜索
-go-ansible galaxy search --galaxy-tags cloud
+ansible-go galaxy search --galaxy-tags cloud
 ```
 
 ### 4.4 信息命令
 
 ```bash
 # 查看 Role 详情
-go-ansible galaxy info geerlingguy.nginx
+ansible-go galaxy info geerlingguy.nginx
 
 # 查看 Collection 详情
-go-ansible galaxy collection info community.general
+ansible-go galaxy collection info community.general
 ```
 
 ---
@@ -383,7 +383,7 @@ Galaxy 提供 REST API 供 CLI 交互：
 ### 5.2 搜索流程
 
 ```
-用户执行：go-ansible galaxy search nginx
+用户执行：ansible-go galaxy search nginx
     │
     ▼
 1. 构造请求：GET /api/v1/search/roles/?name=nginx
@@ -407,7 +407,7 @@ Galaxy 提供 REST API 供 CLI 交互：
 ### 5.3 安装流程
 
 ```
-用户执行：go-ansible galaxy install geerlingguy.nginx,3.1.0
+用户执行：ansible-go galaxy install geerlingguy.nginx,3.1.0
     │
     ▼
 1. 查询 Role 信息：GET /api/v1/roles/?owner__username=geerlingguy&name=nginx

@@ -1,6 +1,6 @@
-# go-ansible 架构详解
+# ansible-go 架构详解
 
-> 本文档深入剖析 go-ansible 的五层架构、数据流全景、插件化设计和并发模型，帮助你理解系统是如何工作的。
+> 本文档深入剖析 ansible-go 的五层架构、数据流全景、插件化设计和并发模型，帮助你理解系统是如何工作的。
 
 ---
 
@@ -8,7 +8,7 @@
 
 ### 1.1 Python 包结构
 
-在理解 go-ansible 的架构之前，先看看 Ansible 的 Python 包结构：
+在理解 ansible-go 的架构之前，先看看 Ansible 的 Python 包结构：
 
 ```
 ansible/
@@ -129,7 +129,7 @@ ansible/
 
 ## 二、五层架构详解
 
-go-ansible 采用五层架构，每一层都有明确的职责边界：
+ansible-go 采用五层架构，每一层都有明确的职责边界：
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -385,12 +385,12 @@ Engine Layer
 
 ### 3.1 完整数据流
 
-以 `go-ansible playbook site.yml -i inventory/hosts` 为例，完整的数据流如下：
+以 `ansible-go playbook site.yml -i inventory/hosts` 为例，完整的数据流如下：
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                        用户输入                               │
-│              go-ansible playbook site.yml -i inventory/hosts  │
+│              ansible-go playbook site.yml -i inventory/hosts  │
 └──────────────────────────┬───────────────────────────────────┘
                            │
                            ▼
@@ -585,7 +585,7 @@ Engine Layer
 
 ### 4.1 插件类型总览
 
-go-ansible 有 7 种插件类型，每种都有明确的接口定义：
+ansible-go 有 7 种插件类型，每种都有明确的接口定义：
 
 | 插件类型 | 接口 | 注册方式 | 生命周期 |
 |----------|------|---------|---------|
@@ -801,11 +801,11 @@ func Get(name string) (Module, bool) {
 ```
 
 ```go
-// cmd/go-ansible/main.go
+// cmd/ansible-go/main.go
 package main
 
 // 这个 import 触发所有模块的 init() 注册
-import _ "github.com/yourname/go-ansible/internal/modules"
+import _ "github.com/yourname/ansible-go/internal/modules"
 ```
 
 **这种模式的优势：**
@@ -877,7 +877,7 @@ Free 策略：
 
 ### 5.2 Go 的 goroutine Worker Pool
 
-go-ansible 使用 goroutine 实现并发，采用 Worker Pool 模式：
+ansible-go 使用 goroutine 实现并发，采用 Worker Pool 模式：
 
 ```
 主 goroutine
@@ -929,7 +929,7 @@ go-ansible 使用 goroutine 实现并发，采用 Worker Pool 模式：
 | 调试难度 | 中等 | 较高 |
 | 资源回收 | 进程退出自动回收 | GC 自动回收 |
 
-### 5.4 go-ansible 的并发实现要点
+### 5.4 ansible-go 的并发实现要点
 
 ```go
 // Worker Pool 实现要点
@@ -973,14 +973,14 @@ type Strategy interface {
 
 ---
 
-## 六、go-ansible 项目结构映射
+## 六、ansible-go 项目结构映射
 
 ### 6.1 目录树
 
 ```
-go-ansible/
+ansible-go/
 ├── cmd/
-│   └── go-ansible/
+│   └── ansible-go/
 │       └── main.go                    # 程序入口
 │
 ├── internal/                          # 私有包（不可被外部导入）
@@ -1106,7 +1106,7 @@ go-ansible/
 
 ### 6.2 与 Ansible Python 包的对应关系
 
-| go-ansible 目录 | Ansible Python 包 | 说明 |
+| ansible-go 目录 | Ansible Python 包 | 说明 |
 |----------------|-------------------|------|
 | `internal/cli/` | `ansible/cli/` | CLI 入口和子命令 |
 | `internal/engine/` | `ansible/executor/` | 执行引擎 |
@@ -1127,22 +1127,22 @@ go-ansible/
 
 ### 6.3 internal vs pkg 的选择
 
-go-ansible 使用 Go 的 `internal/` 包可见性规则：
+ansible-go 使用 Go 的 `internal/` 包可见性规则：
 
 ```
-internal/    → 只能被 go-ansible 项目内部导入
+internal/    → 只能被 ansible-go 项目内部导入
 pkg/         → 可以被外部项目导入
 ```
 
 **放在 internal/ 的理由：**
 - 所有核心实现都不需要被外部导入
-- 防止外部项目依赖 go-ansible 的内部实现
+- 防止外部项目依赖 ansible-go 的内部实现
 - 便于重构——内部实现可以自由修改而不影响外部
 
 **放在 pkg/ 的理由：**
 - 公共类型（Host, Group, Result）可能被外部使用
 - 工具函数可能被外部使用
-- 作为 go-ansible 的"公共 API"
+- 作为 ansible-go 的"公共 API"
 
 ---
 
@@ -1150,7 +1150,7 @@ pkg/         → 可以被外部项目导入
 
 ### 7.1 为什么使用接口
 
-go-ansible 的所有核心组件都通过接口交互，这是刻意的设计决策：
+ansible-go 的所有核心组件都通过接口交互，这是刻意的设计决策：
 
 **可测试性**
 
@@ -1308,7 +1308,7 @@ type Module interface {
 }
 ```
 
-go-ansible 的 Module 接口虽然包含多个方法，但每个方法都有明确的职责，且都是模块必须具备的核心能力。
+ansible-go 的 Module 接口虽然包含多个方法，但每个方法都有明确的职责，且都是模块必须具备的核心能力。
 
 **依赖倒置原则（DIP）**
 
@@ -1341,5 +1341,5 @@ engine := &PlaybookEngine{
 - [Go 并发模式](https://go.dev/doc/effective_go#concurrency)
 - [cobra 文档](https://cobra.dev/)
 - [x/crypto/ssh 文档](https://pkg.go.dev/golang.org/x/crypto/ssh)
-- [设计文档](../superpowers/specs/2026-05-25-go-ansible-design.md)
-- [实现计划](../superpowers/plans/2026-05-25-go-ansible-implementation.md)
+- [设计文档](../superpowers/specs/2026-05-25-ansible-go-design.md)
+- [实现计划](../superpowers/plans/2026-05-25-ansible-go-implementation.md)

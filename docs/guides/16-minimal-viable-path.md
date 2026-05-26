@@ -1,6 +1,6 @@
 # 最小可运行路径
 
-> 本文档定义了 go-ansible 的最小可运行目标（MVP），分析关键路径，并提供分步实现指南。目标是尽快让 go-ansible 能在远程主机上执行有意义的操作。
+> 本文档定义了 ansible-go 的最小可运行目标（MVP），分析关键路径，并提供分步实现指南。目标是尽快让 ansible-go 能在远程主机上执行有意义的操作。
 
 ---
 
@@ -8,7 +8,7 @@
 
 ### 1.1 什么是"完成"
 
-go-ansible 的最小可运行目标是：
+ansible-go 的最小可运行目标是：
 
 **能在远程主机上执行 Playbook，安装软件包并启动服务。**
 
@@ -49,7 +49,7 @@ go-ansible 的最小可运行目标是：
 
 ### 1.2 最小功能集
 
-为了执行上述 Playbook，go-ansible 必须具备以下最小功能集：
+为了执行上述 Playbook，ansible-go 必须具备以下最小功能集：
 
 | 功能 | 必需/可选 | 说明 |
 |------|----------|------|
@@ -167,7 +167,7 @@ CLI 解析 ──→ Inventory 加载 ──→ Playbook 解析 ──→ 模板
 ### 3.1 目标
 
 ```bash
-go-ansible all -m ping -i inventory/hosts
+ansible-go all -m ping -i inventory/hosts
 ```
 
 验证：CLI 解析 → Inventory 加载 → SSH 连接 → 模块注册 → 模块执行 → 结果输出
@@ -189,11 +189,11 @@ CLI 解析 ──→ Inventory 加载 ──→ 主机匹配 ──→ SSH 连�
 
 ```go
 // 需要实现的命令结构
-go-ansible <host-pattern> -m <module> [-a <args>] [-i <inventory>]
+ansible-go <host-pattern> -m <module> [-a <args>] [-i <inventory>]
 
 // cobra 配置
 cmd := &cobra.Command{
-    Use:   "go-ansible <host-pattern>",
+    Use:   "ansible-go <host-pattern>",
     Args:  cobra.ExactArgs(1),
     RunE:  runAdhoc,
 }
@@ -301,21 +301,21 @@ func (c *DefaultCallback) OnTaskFailed(result TaskResult, ignored bool) {
 
 ```bash
 # 基本测试
-go-ansible all -m ping -i testdata/hosts.ini
+ansible-go all -m ping -i testdata/hosts.ini
 
 # 预期输出
 web1 | SUCCESS => pong
 web2 | SUCCESS => pong
 
 # 错误测试
-go-ansible all -m ping -i nonexistent.ini
+ansible-go all -m ping -i nonexistent.ini
 # 预期：错误信息 "inventory file not found: nonexistent.ini"
 ```
 
 ### 3.5 里程碑检查
 
-- [ ] `go-ansible --help` 显示正确的帮助信息
-- [ ] `go-ansible all -m ping -i hosts.ini` 能成功连接并返回 pong
+- [ ] `ansible-go --help` 显示正确的帮助信息
+- [ ] `ansible-go all -m ping -i hosts.ini` 能成功连接并返回 pong
 - [ ] 错误处理：无法连接时显示有意义的错误信息
 - [ ] 退出码：成功时返回 0，失败时返回非 0
 
@@ -326,8 +326,8 @@ go-ansible all -m ping -i nonexistent.ini
 ### 4.1 目标
 
 ```bash
-go-ansible all -m shell -a "uptime" -i inventory/hosts
-go-ansible webservers -m command -a "df -h" -i inventory/hosts
+ansible-go all -m shell -a "uptime" -i inventory/hosts
+ansible-go webservers -m command -a "df -h" -i inventory/hosts
 ```
 
 验证：命令执行、结果解析、错误处理
@@ -431,27 +431,27 @@ func parseResult(stdout, stderr string, rc int) Result {
 
 ```bash
 # Shell 命令
-go-ansible all -m shell -a "uptime" -i hosts.ini
+ansible-go all -m shell -a "uptime" -i hosts.ini
 # 预期输出
 web1 | CHANGED | rc=0 >>  10:30:00 up 30 days,  1:23,  1 user,  load average: 0.01, 0.02, 0.00
 web2 | CHANGED | rc=0 >>  10:30:00 up 15 days,  5:45,  2 users, load average: 0.05, 0.03, 0.01
 
 # Command 命令
-go-ansible webservers -m command -a "df -h" -i hosts.ini
+ansible-go webservers -m command -a "df -h" -i hosts.ini
 # 预期输出
 web1 | CHANGED | rc=0 >> Filesystem      Size  Used Avail Use% Mounted on
 web2 | CHANGED | rc=0 >> Filesystem      Size  Used Avail Use% Mounted on
 
 # 命令失败
-go-ansible all -m shell -a "ls /nonexistent" -i hosts.ini
+ansible-go all -m shell -a "ls /nonexistent" -i hosts.ini
 # 预期输出
 web1 | FAILED | rc=2 >> ls: cannot access '/nonexistent': No such file or directory
 ```
 
 ### 4.5 里程碑检查
 
-- [ ] `go-ansible all -m shell -a "uptime"` 成功执行并显示输出
-- [ ] `go-ansible webservers -m shell -a "uptime"` 只在 webservers 组执行
+- [ ] `ansible-go all -m shell -a "uptime"` 成功执行并显示输出
+- [ ] `ansible-go webservers -m shell -a "uptime"` 只在 webservers 组执行
 - [ ] 命令失败时显示 stderr 和退出码
 - [ ] `--limit` 能限制执行范围
 
@@ -462,7 +462,7 @@ web1 | FAILED | rc=2 >> ls: cannot access '/nonexistent': No such file or direct
 ### 5.1 目标
 
 ```bash
-go-ansible playbook site.yml -i inventory/hosts
+ansible-go playbook site.yml -i inventory/hosts
 ```
 
 验证：YAML 解析、Play 遍历、Task 顺序执行
@@ -630,7 +630,7 @@ func (e *PlaybookEngine) Execute(playbook []Play, inventory *Inventory) error {
 
 ```bash
 # 简单 Playbook
-go-ansible playbook site.yml -i hosts.ini
+ansible-go playbook site.yml -i hosts.ini
 
 # 预期输出
 PLAY [Simple test] *************************************************************
@@ -878,7 +878,7 @@ func expandLoop(task Task, vars map[string]any) ([]Task, error) {
 
 ```bash
 # when 条件
-go-ansible playbook conditional.yml -i hosts.ini
+ansible-go playbook conditional.yml -i hosts.ini
 
 # conditional.yml
 - name: Conditional test
@@ -894,7 +894,7 @@ go-ansible playbook conditional.yml -i hosts.ini
       when: ansible_os_family == "Debian"
 
 # loop 循环
-go-ansible playbook loop.yml -i hosts.ini
+ansible-go playbook loop.yml -i hosts.ini
 
 # loop.yml
 - name: Loop test
@@ -922,10 +922,10 @@ go-ansible playbook loop.yml -i hosts.ini
 
 ### 7.1 目标
 
-实现核心模块，让 go-ansible 能执行实际的服务器配置任务：
+实现核心模块，让 ansible-go 能执行实际的服务器配置任务：
 
 ```bash
-go-ansible playbook full.yml -i inventory/hosts
+ansible-go playbook full.yml -i inventory/hosts
 ```
 
 ### 7.2 核心模块清单
@@ -1151,9 +1151,9 @@ func (m *AssertModule) Run(ctx ExecContext) (Result, error) {
 
 | 里程碑 | 验收标准 | 依赖 |
 |--------|---------|------|
-| M1: CLI 可用 | `go-ansible --help` 和 `--version` 正常工作 | P0 |
-| M2: Ping 可用 | `go-ansible all -m ping` 成功执行 | P0+P1+P2+P4 |
-| M3: Ad-hoc 可用 | `go-ansible all -m shell -a "uptime"` 成功执行 | M2 |
+| M1: CLI 可用 | `ansible-go --help` 和 `--version` 正常工作 | P0 |
+| M2: Ping 可用 | `ansible-go all -m ping` 成功执行 | P0+P1+P2+P4 |
+| M3: Ad-hoc 可用 | `ansible-go all -m shell -a "uptime"` 成功执行 | M2 |
 | M4: Playbook 最小集 | 简单 Playbook 能顺序执行 | M3+P5 |
 | M5: 条件和循环 | `when` 和 `loop` 功能可用 | M4+P3 |
 | M6: 核心模块 | copy/template/yum/service 模块可用 | M4+P6 |
@@ -1165,10 +1165,10 @@ func (m *AssertModule) Run(ctx ExecContext) (Result, error) {
 
 ```bash
 # 检查点
-go-ansible --help          # 显示帮助信息
-go-ansible --version       # 显示版本信息
-go-ansible inventory --help  # 显示 inventory 子命令帮助
-go-ansible playbook --help   # 显示 playbook 子命令帮助
+ansible-go --help          # 显示帮助信息
+ansible-go --version       # 显示版本信息
+ansible-go inventory --help  # 显示 inventory 子命令帮助
+ansible-go playbook --help   # 显示 playbook 子命令帮助
 ```
 
 - [ ] 帮助信息格式正确
@@ -1180,9 +1180,9 @@ go-ansible playbook --help   # 显示 playbook 子命令帮助
 
 ```bash
 # 检查点
-go-ansible all -m ping -i testdata/hosts.ini
-go-ansible webservers -m ping -i testdata/hosts.ini
-go-ansible all -m ping -i nonexistent.ini  # 应该报错
+ansible-go all -m ping -i testdata/hosts.ini
+ansible-go webservers -m ping -i testdata/hosts.ini
+ansible-go all -m ping -i nonexistent.ini  # 应该报错
 ```
 
 - [ ] 能连接到所有主机并返回 pong
@@ -1195,9 +1195,9 @@ go-ansible all -m ping -i nonexistent.ini  # 应该报错
 
 ```bash
 # 检查点
-go-ansible all -m shell -a "uptime" -i hosts.ini
-go-ansible all -m command -a "df -h" -i hosts.ini
-go-ansible all -m shell -a "ls /nonexistent" -i hosts.ini  # 应该报错
+ansible-go all -m shell -a "uptime" -i hosts.ini
+ansible-go all -m command -a "df -h" -i hosts.ini
+ansible-go all -m shell -a "ls /nonexistent" -i hosts.ini  # 应该报错
 ```
 
 - [ ] shell 命令能执行并显示输出
@@ -1209,7 +1209,7 @@ go-ansible all -m shell -a "ls /nonexistent" -i hosts.ini  # 应该报错
 
 ```bash
 # 检查点
-go-ansible playbook simple.yml -i hosts.ini
+ansible-go playbook simple.yml -i hosts.ini
 ```
 
 - [ ] Playbook YAML 解析正确
@@ -1221,8 +1221,8 @@ go-ansible playbook simple.yml -i hosts.ini
 
 ```bash
 # 检查点
-go-ansible playbook conditional.yml -i hosts.ini
-go-ansible playbook loop.yml -i hosts.ini
+ansible-go playbook conditional.yml -i hosts.ini
+ansible-go playbook loop.yml -i hosts.ini
 ```
 
 - [ ] `gather_facts: true` 能收集系统信息
@@ -1234,7 +1234,7 @@ go-ansible playbook loop.yml -i hosts.ini
 
 ```bash
 # 检查点
-go-ansible playbook full.yml -i hosts.ini
+ansible-go playbook full.yml -i hosts.ini
 ```
 
 - [ ] copy 模块能传输文件
@@ -1249,7 +1249,7 @@ go-ansible playbook full.yml -i hosts.ini
 
 ```bash
 # 检查点：执行完整的服务器配置
-go-ansible playbook site.yml -i inventory/production
+ansible-go playbook site.yml -i inventory/production
 
 # site.yml 包含：
 # - 安装软件包
@@ -1300,8 +1300,8 @@ make vet
 
 ## 参考资料
 
-- [设计文档](../superpowers/specs/2026-05-25-go-ansible-design.md)——完整的技术规范
-- [实现计划](../superpowers/plans/2026-05-25-go-ansible-implementation.md)——详细的实现步骤
+- [设计文档](../superpowers/specs/2026-05-25-ansible-go-design.md)——完整的技术规范
+- [实现计划](../superpowers/plans/2026-05-25-ansible-go-implementation.md)——详细的实现步骤
 - [00-overview.md](./00-overview.md)——项目总览
 - [01-architecture.md](./01-architecture.md)——架构详解
 - [Ansible Ad-hoc 命令](https://docs.ansible.com/ansible/latest/command_guide/intro_adhoc.html)

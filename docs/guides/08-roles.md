@@ -340,7 +340,7 @@ nginx_port: 80          # 默认值
     - nginx
 
 # 或通过 extra-vars 覆盖（最高优先级）
-# go-ansible playbook site.yml -e "nginx_port=8080"
+# ansible-go playbook site.yml -e "nginx_port=8080"
 ```
 
 ### 3.3 Role Parameters
@@ -647,13 +647,13 @@ Galaxy Role 使用 `namespace.rolename` 格式：
 
 ```bash
 # 安装 Galaxy Role
-go-ansible galaxy install geerlingguy.nginx
+ansible-go galaxy install geerlingguy.nginx
 
 # 安装到指定目录
-go-ansible galaxy install geerlingguy.nginx -p ./roles
+ansible-go galaxy install geerlingguy.nginx -p ./roles
 
 # 指定版本
-go-ansible galaxy install geerlingguy.nginx,3.1.0
+ansible-go galaxy install geerlingguy.nginx,3.1.0
 ```
 
 安装后的目录结构：
@@ -685,7 +685,7 @@ roles:
 
 ```bash
 # 批量安装
-go-ansible galaxy install -r requirements.yml
+ansible-go galaxy install -r requirements.yml
 ```
 
 ### 7.4 Role 引用名称解析

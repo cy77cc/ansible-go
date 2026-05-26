@@ -2,7 +2,7 @@
 
 > 对应阶段：P4 + P6 | 设计文档引用：第六章
 
-模块是 Ansible 的"动词"——每个模块管理一种特定的系统状态（文件、包、服务等）。go-ansible 采用**本地编排 + SSH 命令执行**模式：模块根据参数在本地生成 shell 命令，通过 SSH 在远程主机执行，收集 stdout/stderr/exit code，解析为统一的 `Result` 结构。
+模块是 Ansible 的"动词"——每个模块管理一种特定的系统状态（文件、包、服务等）。ansible-go 采用**本地编排 + SSH 命令执行**模式：模块根据参数在本地生成 shell 命令，通过 SSH 在远程主机执行，收集 stdout/stderr/exit code，解析为统一的 `Result` 结构。
 
 ---
 
@@ -33,7 +33,7 @@
 
 ## 一、模块执行模型总览
 
-### Ansible 原生模式 vs go-ansible 模式
+### Ansible 原生模式 vs ansible-go 模式
 
 **Ansible（Python）的执行流程：**
 1. 控制节点将模块代码（Python 脚本）序列化
@@ -42,13 +42,13 @@
 4. 脚本输出 JSON 到 stdout
 5. 控制节点解析 JSON，清理临时文件
 
-**go-ansible 的执行流程：**
+**ansible-go 的执行流程：**
 1. 模块根据参数在**本地**生成 shell 命令字符串
 2. 通过 SSH 的 `Exec()` 方法在远程执行命令
 3. 收集 stdout/stderr/exit code
 4. 解析为统一的 `Result` 结构
 
-这意味着 go-ansible 的每个模块本质上是一个"shell 命令生成器"——它知道如何检查当前状态、如何达到目标状态、如何判断是否发生了变更。
+这意味着 ansible-go 的每个模块本质上是一个"shell 命令生成器"——它知道如何检查当前状态、如何达到目标状态、如何判断是否发生了变更。
 
 ### 接口定义
 
@@ -106,7 +106,7 @@ Check Mode（`--check`）下，只执行步骤 1 和 2，跳过步骤 3，返回
 - 仅在校验和不同时传输文件（幂等性）
 - 传输后执行 `chmod`/`chown` 设置权限
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 1. 检查远程文件的校验和
 sha256sum /etc/app.conf 2>/dev/null | cut -d' ' -f1
@@ -169,7 +169,7 @@ func (m *CopyModule) SupportsCheckMode() bool
 - 与远程文件校验和比较
 - 仅在内容不同时传输
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 1. 检查远程文件校验和
 sha256sum /etc/nginx/nginx.conf 2>/dev/null | cut -d' ' -f1
@@ -234,7 +234,7 @@ func (m *TemplateModule) SupportsCheckMode() bool
 - 先用 `stat` 命令检查目标当前状态
 - 比较当前状态与目标状态，仅在有差异时执行
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # state=directory: 创建目录
 stat /opt/app 2>/dev/null || mkdir -p /opt/app
@@ -312,7 +312,7 @@ func (m *FileModule) SupportsCheckMode() bool
 - 在远程执行 `stat` 命令并解析 JSON 输出
 - 结果存储在 `register` 变量中供后续使用
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 stat -c '{"size":%s,"mode":"%a","uid":%u,"gid":%g,"mtime":%Y}' /etc/app.conf
 # 或获取校验和
@@ -362,7 +362,7 @@ func (m *StatModule) SupportsCheckMode() bool  // true（只读）
 - 纯只读操作
 - 组合 `find` 命令的参数（`-name`, `-type`, `-mtime`, `-size` 等）
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 find /var/log -name "*.log" -type f -mtime +30 -size +1M
 ```
@@ -415,7 +415,7 @@ func (m *FindModule) SupportsCheckMode() bool  // true（只读）
 - 未匹配到：用 `sed` 或 `echo >>` 在指定位置插入
 - `state=absent`：用 `sed` 删除匹配的行
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 检查是否存在匹配行
 grep -E '^SELINUX=' /etc/selinux/config
@@ -481,7 +481,7 @@ func (m *LineinfileModule) SupportsCheckMode() bool
 - 存在：用 `sed` 替换标记之间的内容
 - 不存在：在指定位置插入整个标记块
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 检查标记是否存在
 grep -F '# BEGIN MANAGED BLOCK' /etc/hosts
@@ -530,7 +530,7 @@ func (m *BlockinfileModule) SupportsCheckMode() bool
 - 在远程执行 `rsync` 命令（通过 SSH 通道）
 - rsync 自带增量传输（只传差异部分）
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 rsync --delay-updates -F --compress --archive --rsh='ssh -S none' \
   --out-format='<<CHANGED>>%i %n%L' /local/path/ user@host:/remote/path/
@@ -576,7 +576,7 @@ func (m *SynchronizeModule) SupportsCheckMode() bool
 - 使用 SFTP 从远程下载文件
 - 按主机名创建本地目录结构（`dest/hostname/path`）
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 检查远程文件是否存在
 stat /etc/app.conf
@@ -622,7 +622,7 @@ func (m *FetchModule) SupportsCheckMode() bool
 - `remote_src=true`：直接在远程解压已存在的归档文件
 - 幂等性：检查目标目录是否存在
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # tar 归档
 tar -xf /tmp/app.tar.gz -C /opt/app
@@ -674,7 +674,7 @@ func (m *UnarchiveModule) SupportsCheckMode() bool
 - 根据 `state` 参数决定操作：`present`→安装，`absent`→卸载，`latest`→升级
 - 支持批量安装（`name` 接受列表）
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 检查包是否安装
 rpm -q nginx
@@ -743,7 +743,7 @@ func (m *YumModule) SupportsCheckMode() bool
 - 支持 `update_cache` 在安装前更新包索引
 - 支持 `deb` 文件直接安装
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 检查包是否安装
 dpkg -s nginx 2>/dev/null | grep -q 'Status: install ok installed'
@@ -800,7 +800,7 @@ func (m *AptModule) SupportsCheckMode() bool
 
 **解决什么问题：** 管理 RPM 系统的软件包（Fedora/RHEL 8+），是 `yum` 的现代替代。
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 rpm -q nginx
 dnf -y install nginx
@@ -818,7 +818,7 @@ type DnfModule struct{}
 
 **解决什么问题：** 管理 Python 包。
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 检查包是否安装
 pip freeze 2>/dev/null | grep -i nginx
@@ -874,7 +874,7 @@ func (m *PipModule) SupportsCheckMode() bool
 - 根据 `state` 参数执行相应操作
 - `enabled` 控制开机自启
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 检查服务状态
 service nginx status
@@ -939,7 +939,7 @@ func (m *ServiceModule) SupportsCheckMode() bool
 
 **解决什么问题：** 专用于 systemd 的服务管理，支持 `daemon_reload` 等 systemd 特有功能。
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 检查状态
 systemctl is-active nginx
@@ -1003,7 +1003,7 @@ func (m *SystemdModule) SupportsCheckMode() bool
 - 支持 `creates`/`removes` 实现伪幂等
 - **默认不幂等**——每次执行都会运行命令
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 基本执行
 /bin/sh -c 'uptime'
@@ -1067,7 +1067,7 @@ func (m *ShellModule) SupportsCheckMode() bool  // false
 - 参数直接作为 `exec` 的参数数组，不经过 `/bin/sh`
 - 更安全——用户输入不会被 shell 解释
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 直接执行，不经 shell
 /usr/bin/uptime
@@ -1115,7 +1115,7 @@ func (m *CommandModule) SupportsCheckMode() bool  // false
 3. 执行脚本
 4. 清理临时文件
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 上传后执行
 chmod +x /tmp/script.sh
@@ -1157,7 +1157,7 @@ func (m *ScriptModule) SupportsCheckMode() bool  // false
 
 **解决什么问题：** 执行原始 SSH 命令，不经过模块系统。用于 bootstrap 场景（远程主机没有 Python）。
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 直接执行，完全不处理
 yum install -y python3
@@ -1180,7 +1180,7 @@ func (m *RawModule) SupportsCheckMode() bool  // false
 
 **解决什么问题：** 执行交互式命令，自动响应提示（如密码输入）。
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 通过 expect 或 pexpect 实现
 expect -c '
@@ -1236,7 +1236,7 @@ func (m *ExpectModule) SupportsCheckMode() bool  // false
 - 存在时比较属性（uid、groups、shell 等），仅修改有差异的
 - 不存在时用 `useradd` 创建
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 检查用户是否存在
 id johndoe 2>/dev/null
@@ -1307,7 +1307,7 @@ func (m *UserModule) SupportsCheckMode() bool
 
 **解决什么问题：** 管理系统用户组。
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 检查组是否存在
 getent group mygroup
@@ -1346,7 +1346,7 @@ func (m *GroupModule) SupportsCheckMode() bool
 
 **解决什么问题：** 管理用户的 SSH 公钥（`~/.ssh/authorized_keys` 文件）。
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 检查公钥是否存在
 grep -F 'ssh-rsa AAAAB3...' ~/.ssh/authorized_keys
@@ -1398,7 +1398,7 @@ func (m *AuthorizedKeyModule) SupportsCheckMode() bool
 
 **解决什么问题：** 发送 HTTP 请求（GET/POST/PUT/DELETE 等），常用于 API 调用和健康检查。
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # GET 请求
 curl -s -o /tmp/response.json -w '%{http_code}' https://api.example.com/health
@@ -1452,7 +1452,7 @@ func (m *UriModule) SupportsCheckMode() bool  // false
 
 **解决什么问题：** 从 URL 下载文件到远程主机。
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 下载文件
 curl -sSL -o /tmp/file.zip https://example.com/file.zip
@@ -1490,7 +1490,7 @@ func (m *GetUrlModule) SupportsCheckMode() bool
 
 **解决什么问题：** 等待某个条件满足（端口打开、文件存在、正则匹配等）。常用于服务启动后的健康检查。
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 等待端口打开
 while ! nc -z localhost 8080; do sleep 2; done
@@ -1546,7 +1546,7 @@ func (m *WaitForModule) SupportsCheckMode() bool  // false
 
 **解决什么问题：** 等待远程主机可连接（SSH 可用）。常用于等待新机器启动。
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 尝试 SSH 连接，失败则重试
 while ! ssh -o ConnectTimeout=5 host 'echo ok'; do sleep 5; done
@@ -1574,7 +1574,7 @@ func (m *WaitForConnectionModule) SupportsCheckMode() bool
 - 解析输出为结构化数据
 - 注入到变量上下文，以 `ansible_*` 前缀访问
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 操作系统信息
 cat /etc/os-release
@@ -1750,7 +1750,7 @@ func (m *SetFactModule) SupportsCheckMode() bool  // true
 
 **解决什么问题：** 设置系统主机名。
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 检查当前主机名
 hostname
@@ -1774,7 +1774,7 @@ func (m *HostnameModule) SupportsCheckMode() bool
 
 **解决什么问题：** 管理 cron 定时任务。
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 检查是否存在同名任务
 crontab -l 2>/dev/null | grep -F '# Ansible: backup'
@@ -1832,7 +1832,7 @@ func (m *CronModule) SupportsCheckMode() bool
 
 **解决什么问题：** 管理内核参数（`/proc/sys/` 下的值）。
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # 检查当前值
 sysctl -n net.ipv4.ip_forward
@@ -1912,7 +1912,7 @@ func (m *MetaModule) SupportsCheckMode() bool  // true
 
 **解决什么问题：** 查询异步任务的执行状态。与 `async`/`poll` 配合使用。
 
-**go-ansible 生成的 Shell 命令：**
+**ansible-go 生成的 Shell 命令：**
 ```bash
 # check 模式：读取状态文件
 cat /root/.ansible_async/<jid>
